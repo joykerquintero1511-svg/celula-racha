@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retos y Tareas Semanales</title>
+    <link rel="stylesheet" href="assets/css/myStyle.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-link">⬅️ Volver al Inicio</a>
+            <h1>📝 Desafíos Semanales</h1>
+            <p>¡Completa tus retos para ganar puntos y escudos de racha!</p>
+        </header>
+
+        <!-- Resumen de progreso del usuario -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span>⭐ Puntos</span>
+                <b id="puntos-val">0</b>
+            </div>
+            <div class="stat-box">
+                <span>🛡️ Escudos</span>
+                <b id="escudos-val">0</b>
+            </div>
+        </div>
+
+        <!-- Lista de tareas/retos -->
+        <div class="lista-tareas">
+            
+            <!-- Tarea 1: Lectura -->
+            <div class="tarea-card" id="tarea-1">
+                <div class="tarea-header">
+                    <span class="badge lectura">📖 Lectura</span>
+                    <span class="puntos-recompensa">+20 pts</span>
+                </div>
+                <h3>Lectura de la Semana</h3>
+                <p>Lee el capítulo 15 del libro de Juan y reflexiona en el versículo 5 sobre la vid verdadera.</p>
+                <button class="btn btn-primary btn-tarea" onclick="completarTarea(1, 20, false)">Marcar como Completado</button>
+            </div>
+
+            <!-- Tarea 2: Versículo -->
+            <div class="tarea-card" id="tarea-2">
+                <div class="tarea-header">
+                    <span class="badge memorizar">🧠 Memorización</span>
+                    <span class="puntos-recompensa">+30 pts</span>
+                </div>
+                <h3>Versículo Clave</h3>
+                <p>Aprende de memoria Josué 1:9 y repítelo con uno de tus compañeros en la célula.</p>
+                <button class="btn btn-primary btn-tarea" onclick="completarTarea(2, 30, false)">Marcar como Completado</button>
+            </div>
+
+            <!-- Tarea 3: Reto Especial con Escudo -->
+            <div class="tarea-card especial" id="tarea-3">
+                <div class="tarea-header">
+                    <span class="badge especial">🛡️ Reto Épico</span>
+                    <span class="puntos-recompensa">+1 Escudo</span>
+                </div>
+                <h3>Invitado de Honor</h3>
+                <p>Invita a un amigo o compañero que nunca haya venido a la célula de los jueves.</p>
+                <button class="btn btn-primary btn-tarea" onclick="completarTarea(3, 0, true)">Marcar como Completado</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        // Cargar los puntos y escudos al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            const usuario = obtenerDatosUsuario();
+            document.getElementById('puntos-val').innerText = usuario.puntos || 0;
+            document.getElementById('escudos-val').innerText = usuario.escudos || 0;
+
+            // Verificar tareas ya completadas
+            const completadas = usuario.tareasCompletadas || [];
+            completadas.forEach(id => {
+                const card = document.getElementById(`tarea-${id}`);
+                if (card) {
+                    const btn = card.querySelector('.btn-tarea');
+                    btn.disabled = true;
+                    btn.innerText = "✅ Completado";
+                    btn.classList.add('btn-completado');
+                }
+            });
+        });
+
+        // Función para procesar el cumplimiento de la tarea
+        function completarTarea(idTarea, puntosGanados, otorgaEscudo) {
+            let usuario = obtenerDatosUsuario();
+            
+            if (!usuario.tareasCompletadas) {
+                usuario.tareasCompletadas = [];
+            }
+
+            if (!usuario.puntos) {
+                usuario.puntos = 0;
+            }
+
+            if (usuario.tareasCompletadas.includes(idTarea)) {
+                alert("Ya has completado esta tarea.");
+                return;
+            }
+
+            // Registrar tarea y sumar recompensas
+            usuario.tareasCompletadas.push(idTarea);
+            usuario.puntos += puntosGanados;
+
+            if (otorgaEscudo) {
+                usuario.escudos = (usuario.escudos || 0) + 1;
+                alert(`¡Felicidades! Completaste un reto épico y ganaste 1 Escudo de Racha 🛡️.`);
+            } else {
+                alert(`¡Excelente! Has ganado +${puntosGanados} puntos ⭐.`);
+            }
+
+            guardarDatosUsuario(usuario);
+
+            // Actualizar la vista
+            location.reload();
+        }
+    </script>
+</body>
+</html>
