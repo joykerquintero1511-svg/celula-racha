@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Célula Juvenil - Racha</title>
+    <link rel="stylesheet" href="myStyle.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🔥 Racha de Célula</h1>
+            <p id="saludo">¡Mantén encendido el fuego de la palabra!</p>
+        </header>
+
+        <!-- Tarjeta de Racha Estilo Duolingo -->
+        <div class="racha-card">
+            <div class="fuego-animado">🔥</div>
+            <div class="racha-info">
+                <h2 id="num-racha">0</h2>
+                <p>Semanas Consecutivas</p>
+            </div>
+        </div>
+
+        <!-- Estado de Escudos y Récord -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span>🛡️ Escudos</span>
+                <b id="num-escudos">1</b>
+            </div>
+            <div class="stat-box">
+                <span>🏆 Récord</span>
+                <b id="num-record">0</b>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="menu-acciones">
+            <a href="escanear.html" class="btn btn-primary">📸 Escanear QR de Hoy</a>
+            <a href="tareas.html" class="btn btn-secondary">📝 Tareas y Retos Semanales</a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Cargar datos dinámicos en la interfaz al abrir
+        const usuario = obtenerDatosUsuario();
+        document.getElementById('num-racha').innerText = usuario.rachaActual;
+        document.getElementById('num-escudos').innerText = usuario.escudos;
+        document.getElementById('num-record').innerText = usuario.rachaMaxima;
+    </script>
+</body>
+</html>

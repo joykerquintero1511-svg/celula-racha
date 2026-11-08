@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear Asistencia</title>
+    <link rel="stylesheet" href="assets/css/myStyle.css">
+</head>
+<body>
+
+    <div class="container text-center">
+        <h2>Apunta al Código QR</h2>
+        <p>Coloca la cámara frente al código provisto este jueves en la célula.</p>
+        
+        <div id="reader" style="width: 100%; max-width: 350px; margin: 20px auto;"></div>
+        
+        <a href="index.html" class="btn btn-secondary">Regresar al Inicio</a>
+    </div>
+
+    <!-- Librería para leer QR con la cámara web del celular -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            // Puedes validar si el texto del QR contiene una palabra clave de tu célula
+            if (decodedText.includes("CELULA_JUEVES")) {
+                registrarAsistenciaQR();
+            } else {
+                alert("Código QR no reconocido. Asegúrate de escanear el QR oficial de la célula.");
+            }
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+</html>
