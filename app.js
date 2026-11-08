@@ -19,9 +19,59 @@ function cerrarSesion() {
     window.location.href = 'login.html';
 }
 
+// --- REGISTRO DE NUEVOS JÓVENES ---
+function registrarNuevoJoven(nombre, telefono) {
+    let db = obtenerBaseDatosLocal();
+    
+    // Validar si el teléfono ya está registrado
+    let existe = db.find(u => u.telefono === telefono);
+    if (existe) {
+        alert("⚠️ Este número de teléfono ya está registrado.");
+        return false;
+    }
+
+    let nuevoUsuario = {
+        id: Date.now(),
+        nombre: nombre,
+        telefono: telefono,
+        rachaActual: 0,
+        rachaMaxima: 0,
+        ultimaAsistencia: null,
+        escudos: 1,
+        puntos: 0,
+        tareasCompletadas: [],
+        aprobado: false // Pendiente de aprobación por el líder
+    };
+
+    db.push(nuevoUsuario);
+    guardarBaseDatosLocal(db);
+    alert("¡Registro exitoso! Tu cuenta está pendiente de aprobación por el líder de la célula.");
+    window.location.href = 'login.html';
+    return true;
+}
+
+// --- INICIO DE SESIÓN ---
+function iniciarSesion(telefono) {
+    let db = obtenerBaseDatosLocal();
+    let usuario = db.find(u => u.telefono === telefono);
+
+    if (!usuario) {
+        alert("❌ Usuario no encontrado. Por favor, regístrate primero.");
+        return false;
+    }
+
+    if (!usuario.aprobado) {
+        alert("⏳ Tu cuenta aún está pendiente de aprobación por el líder.");
+        return false;
+    }
+
+    localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
+    window.location.href = 'index.html';
+    return true;
+}
+
 // --- GESTIÓN DE TAREAS DINÁMICAS ---
 function obtenerTareasGlobales() {
-    // Tareas por defecto si no hay ninguna creada
     let tareas = JSON.parse(localStorage.getItem('celula_tareas_globales'));
     if (!tareas) {
         tareas = [
@@ -29,7 +79,7 @@ function obtenerTareasGlobales() {
                 id: 1,
                 titulo: "Lectura del Libro de Juan",
                 descripcion: "Lee el capítulo 15 y responde la siguiente pregunta:",
-                tipo: "seleccion", // seleccion, abierta, si_no
+                tipo: "seleccion",
                 opciones: ["Versículo 5", "Versículo 10", "Versículo 16"],
                 respuestaCorrecta: "Versículo 5",
                 puntos: 20
