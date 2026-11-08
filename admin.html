@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Líder - Célula</title>
     <link rel="stylesheet" href="mystyle.css">
+    <!-- Librería de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -12,7 +14,7 @@
         <header>
             <a href="login.html" class="back-link">⬅️ Cerrar Panel</a>
             <h1>⚙️ Panel de Administración</h1>
-            <p>Control total de la célula juvenil</p>
+            <p>Control total de la célula en tiempo real</p>
         </header>
 
         <!-- Autenticación de Líder -->
@@ -26,67 +28,16 @@
         <!-- Contenido Completo del Panel -->
         <div id="admin-panel" style="display: none;">
             
-            <!-- Pestañas de Administración -->
             <div class="tab-menu" style="margin-bottom: 20px;">
-                <button class="tab-btn active" onclick="cambiarTabAdmin('jovenes')">Jóvenes</button>
-                <button class="tab-btn" onclick="cambiarTabAdmin('tareas')">Crear Tarea</button>
-                <button class="tab-btn" onclick="cambiarTabAdmin('anuncios')">Enviar Anuncio</button>
+                <button class="tab-btn active" onclick="cambiarTabAdmin('jovenes')">Jóvenes Registrados</button>
             </div>
 
-            <!-- SECCIÓN 1: JÓVENES -->
+            <!-- SECCIÓN: JÓVENES -->
             <div id="sec-jovenes" class="admin-seccion">
-                <h3>Aprobación de Miembros</h3>
-                <div id="lista-solicitudes" style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px;"></div>
-            </div>
-
-            <!-- SECCIÓN 2: CREAR TAREAS -->
-            <div id="sec-tareas" class="admin-seccion" style="display: none;">
-                <h3>Crear Nuevo Desafío / Cuestionario</h3>
-                <div class="input-group" style="margin-top: 12px;">
-                    <label>Título de la Tarea</label>
-                    <input type="text" id="t-titulo" placeholder="Ej: Reto de Memoria Bíblica">
+                <h3>Aprobación de Miembros (Nube)</h3>
+                <div id="lista-solicitudes" style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <p style="color: var(--text-secondary); text-align: center;">Cargando solicitudes...</p>
                 </div>
-                <div class="input-group">
-                    <label>Descripción / Instrucciones</label>
-                    <textarea id="t-desc" rows="3" style="width:100%; padding:10px; border-radius:10px; background:rgba(15,23,42,0.8); color:white; border:1px solid var(--card-border);" placeholder="Explica qué deben hacer..."></textarea>
-                </div>
-                <div class="input-group">
-                    <label>Tipo de Pregunta</label>
-                    <select id="t-tipo" onchange="cambiarTipoPregunta()" style="width:100%; padding:12px; border-radius:10px; background:rgba(15,23,42,0.8); color:white; border:1px solid var(--card-border);">
-                        <option value="seleccion">Selección Simple (Opciones)</option>
-                        <option value="abierta">Respuesta Escrita</option>
-                        <option value="si_no">Sí / No</option>
-                    </select>
-                </div>
-
-                <!-- Opciones dinámicas para selección -->
-                <div id="grupo-opciones" class="input-group">
-                    <label>Opciones (separadas por coma)</label>
-                    <input type="text" id="t-opciones" placeholder="Ej: Mateo, Marcos, Lucas, Juan">
-                    <label style="margin-top: 8px;">Respuesta Correcta exacto</label>
-                    <input type="text" id="t-correcta" placeholder="Ej: Juan">
-                </div>
-
-                <div class="input-group">
-                    <label>Puntos de Recompensa ⭐</label>
-                    <input type="number" id="t-puntos" value="20">
-                </div>
-
-                <button class="btn btn-primary" onclick="crearNuevaTareaAdmin()">Publicar Tarea para los Jóvenes</button>
-            </div>
-
-            <!-- SECCIÓN 3: ANUNCIOS -->
-            <div id="sec-anuncios" class="admin-seccion" style="display: none;">
-                <h3>Enviar Anuncio Informativo</h3>
-                <div class="input-group" style="margin-top: 12px;">
-                    <label>Título del Anuncio</label>
-                    <input type="text" id="an-titulo" placeholder="Ej: ¡Salida especial de Célula!">
-                </div>
-                <div class="input-group">
-                    <label>Contenido del Mensaje</label>
-                    <textarea id="an-contenido" rows="4" style="width:100%; padding:10px; border-radius:10px; background:rgba(15,23,42,0.8); color:white; border:1px solid var(--card-border);" placeholder="Escribe los detalles..."></textarea>
-                </div>
-                <button class="btn btn-primary" onclick="enviarAnuncioAdmin()">Publicar Anuncio</button>
             </div>
 
         </div>
@@ -94,55 +45,38 @@
 
     <script src="app.js"></script>
     <script>
-        const CLAVE_LIDER = "celula2026";
+        const CLAVE_LIDER = "celula2026"; // Tu clave de líder
 
         function verificarAdmin() {
             let pass = document.getElementById('admin-pass').value;
             if(pass === CLAVE_LIDER) {
                 document.getElementById('admin-auth').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
-                cargarSolicitudesAdmin();
+                cargarSolicitudesNube();
             } else {
                 alert("Contraseña incorrecta");
             }
         }
 
-        function cambiarTabAdmin(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.admin-seccion').forEach(s => s.style.display = 'none');
-            
-            event.target.classList.add('active');
-            if(tab === 'jovenes') {
-                document.getElementById('sec-jovenes').style.display = 'block';
-                cargarSolicitudesAdmin();
-            } else if(tab === 'tareas') {
-                document.getElementById('sec-tareas').style.display = 'block';
-            } else if(tab === 'anuncios') {
-                document.getElementById('sec-anuncios').style.display = 'block';
-            }
-        }
-
-        function cambiarTipoPregunta() {
-            let tipo = document.getElementById('t-tipo').value;
-            let grupoOp = document.getElementById('grupo-opciones');
-            if(tipo === 'abierta' || tipo === 'si_no') {
-                grupoOp.style.display = 'none';
-            } else {
-                grupoOp.style.display = 'block';
-            }
-        }
-
-        function cargarSolicitudesAdmin() {
-            let db = obtenerBaseDatosLocal();
+        async function cargarSolicitudesNube() {
             let contenedor = document.getElementById('lista-solicitudes');
-            contenedor.innerHTML = "";
+            contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>Consultando base de datos...</p>";
 
-            if(db.length === 0) {
-                contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay jóvenes registrados.</p>";
+            const { data, error } = await supabase.from('usuarios').select('*').order('id', { ascending: false });
+
+            if (error) {
+                contenedor.innerHTML = "<p style='text-align: center; color: red;'>Error al cargar los usuarios de la nube.</p>";
+                console.error(error);
                 return;
             }
 
-            db.forEach((user, index) => {
+            if (!data || data.length === 0) {
+                contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay jóvenes registrados todavía.</p>";
+                return;
+            }
+
+            contenedor.innerHTML = "";
+            data.forEach((user) => {
                 let card = document.createElement('div');
                 card.className = "tarea-card";
                 card.innerHTML = `
@@ -150,85 +84,26 @@
                         <h3>${user.nombre}</h3>
                         <span class="badge ${user.aprobado ? 'memorizar' : 'lectura'}">${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>
                     </div>
-                    <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.rachaActual} semanas</p>
-                    ${!user.aprobado ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem;" onclick="aprobarUsuario(${index})">Aprobar Acceso</button>` : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem;" onclick="revocarUsuario(${index})">Desactivar</button>`}
+                    <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual} semanas</p>
+                    ${!user.aprobado 
+                        ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
+                        : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
                 `;
                 contenedor.appendChild(card);
             });
         }
 
-        function aprobarUsuario(index) {
-            let db = obtenerBaseDatosLocal();
-            db[index].aprobado = true;
-            guardarBaseDatosLocal(db);
-            cargarSolicitudesAdmin();
-        }
+        async function cambiarEstadoUsuario(idUsuario, nuevoEstado) {
+            const { error } = await supabase
+                .from('usuarios')
+                .update({ aprobado: nuevoEstado })
+                .eq('id', idUsuario);
 
-        function revocarUsuario(index) {
-            let db = obtenerBaseDatosLocal();
-            db[index].aprobado = false;
-            guardarBaseDatosLocal(db);
-            cargarSolicitudesAdmin();
-        }
-
-        function crearNuevaTareaAdmin() {
-            let titulo = document.getElementById('t-titulo').value.trim();
-            let desc = document.getElementById('t-desc').value.trim();
-            let tipo = document.getElementById('t-tipo').value;
-            let puntos = parseInt(document.getElementById('t-puntos').value) || 10;
-            
-            let opciones = [];
-            let correcta = "";
-
-            if(tipo === 'seleccion') {
-                let rawOp = document.getElementById('t-opciones').value;
-                opciones = rawOp.split(',').map(o => o.trim()).filter(o => o);
-                correcta = document.getElementById('t-correcta').value.trim();
-            } else if(tipo === 'si_no') {
-                opciones = ["Sí", "No"];
-                correcta = "Sí"; // O por defecto
+            if (error) {
+                alert("Error al actualizar el estado: " + error.message);
+            } else {
+                cargarSolicitudesNube(); // Recargar la lista al instante
             }
-
-            if(!titulo || !desc) {
-                alert("Completa el título y la descripción.");
-                return;
-            }
-
-            let tareas = obtenerTareasGlobales();
-            let nueva = {
-                id: Date.now(),
-                titulo,
-                descripcion: desc,
-                tipo,
-                opciones,
-                respuestaCorrecta: correcta,
-                puntos
-            };
-
-            tareas.push(nueva);
-            guardarTareasGlobales(tareas);
-            alert("¡Tarea creada y publicada con éxito para los jóvenes!");
-            document.getElementById('t-titulo').value = "";
-            document.getElementById('t-desc').value = "";
-        }
-
-        function enviarAnuncioAdmin() {
-            let titulo = document.getElementById('an-titulo').value.trim();
-            let contenido = document.getElementById('an-contenido').value.trim();
-            if(!titulo || !contenido) { alert("Rellena todos los campos del anuncio"); return; }
-
-            let anuncios = obtenerAnunciosGlobales();
-            anuncios.unshift({
-                id: Date.now(),
-                titulo,
-                contenido,
-                fecha: new Date().toLocaleDateString()
-            });
-
-            guardarAnunciosGlobales(anuncios);
-            alert("¡Anuncio enviado con éxito a la cartelera de los jóvenes!");
-            document.getElementById('an-titulo').value = "";
-            document.getElementById('an-contenido').value = "";
         }
     </script>
 </body>
