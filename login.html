@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Célula Juvenil</title>
+    <link rel="stylesheet" href="mystyle.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🔥 Célula Juvenil</h1>
+            <p>Ingresa con tu número o regístrate para comenzar</p>
+        </header>
+
+        <!-- Pestañas de Login / Registro -->
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar Sesión</button>
+            <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
+        </div>
+
+        <!-- Formulario de Login -->
+        <div id="form-login" class="form-seccion">
+            <div class="input-group">
+                <label>Número de Teléfono</label>
+                <input type="tel" id="login-tel" placeholder="Ej: 04121234567">
+            </div>
+            <button class="btn btn-primary" onclick="ejecutarLogin()">Entrar a mi Racha</button>
+        </div>
+
+        <!-- Formulario de Registro -->
+        <div id="form-registro" class="form-seccion" style="display: none;">
+            <div class="input-group">
+                <label>Nombre y Apellido</label>
+                <input type="text" id="reg-nombre" placeholder="Tu nombre completo">
+            </div>
+            <div class="input-group">
+                <label>Número de Teléfono</label>
+                <input type="tel" id="reg-tel" placeholder="Ej: 04121234567">
+            </div>
+            <button class="btn btn-primary" onclick="ejecutarRegistro()">Solicitar Registro</button>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="admin.html" style="color: var(--text-secondary); font-size: 0.8rem; text-decoration: none;">⚙️ Panel de Líder (Administrador)</a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        function cambiarTab(tipo) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(tipo === 'login') {
+                document.getElementById('form-login').style.display = 'block';
+                document.getElementById('form-registro').style.display = 'none';
+                event.target.classList.add('active');
+            } else {
+                document.getElementById('form-login').style.display = 'none';
+                document.getElementById('form-registro').style.display = 'block';
+                event.target.classList.add('active');
+            }
+        }
+
+        function ejecutarLogin() {
+            let tel = document.getElementById('login-tel').value.trim();
+            if(!tel) { alert("Ingresa tu teléfono"); return; }
+            iniciarSesion(tel);
+        }
+
+        function ejecutarRegistro() {
+            let nombre = document.getElementById('reg-nombre').value.trim();
+            let tel = document.getElementById('reg-tel').value.trim();
+            if(!nombre || !tel) { alert("Completa todos los campos"); return; }
+            registrarNuevoJoven(nombre, tel);
+        }
+    </script>
+</body>
+</html>
