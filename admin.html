@@ -159,17 +159,17 @@
         }
 
         // ==========================================
-        // GENERADOR DE QR DEL DÍA
+        // GENERADOR DE QR DEL DÍA (Versión Enlace Web)
         // ==========================================
         function generarQRDelDia() {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fecha-qr-texto').innerText = `📅 Fecha: ${hoy}`;
 
-            // Creamos un identificador único para la asistencia de hoy
-            const datosQR = `CELULA_ASISTENCIA_${hoy}`;
+            // Creamos un enlace directo a tu panel con el parámetro de asistencia de hoy
+            const urlAsistencia = `https://joykerquintero1511-svg.github.io/panel.html?asistencia=${hoy}`;
             
-            // Usamos API pública de códigos QR para renderizarlo instantáneamente
-            const urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(datosQR)}`;
+            // Generamos el QR que contiene el enlace web exacto
+            const urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(urlAsistencia)}`;
             
             const contenedor = document.getElementById('contenedor-imagen-qr');
             contenedor.innerHTML = `<img src="${urlQR}" alt="QR de Asistencia" style="display: block; margin: auto; border-radius: 8px;">`;
