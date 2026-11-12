@@ -92,7 +92,7 @@ async function iniciarSesion(telefono) {
         }
 
         localStorage.setItem('celula_sesion_activa', JSON.stringify(data));
-        window.location.href = 'index.html';
+        window.location.href = 'panel.html';
         return true;
     } catch (err) {
         console.error("Excepción en login:", err);
