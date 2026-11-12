@@ -12,12 +12,12 @@
 
     <div class="container">
         <header>
-    <div class="logo-container">
-        <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
-    </div>
-    <h1>🔥 Celula Juvenil</h1>
-    <p id="saludo">¡Mantén encendido el fuego de la palabra!</p>
-</header>
+            <div class="logo-container">
+                <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
+            </div>
+            <h1>🔥 Célula Juvenil</h1>
+            <p id="saludo">¡Mantén encendido el fuego de la palabra!</p>
+        </header>
 
         <!-- Tarjeta de Racha Estilo Duolingo -->
         <div class="racha-card">
@@ -31,8 +31,8 @@
         <!-- Estado de Escudos y Récord -->
         <div class="stats-grid">
             <div class="stat-box">
-                <span>🛡️ Escudos</span>
-                <b id="num-escudos">1</b>
+                <span>🛡️ Puntos</span>
+                <b id="num-puntos">0</b>
             </div>
             <div class="stat-box">
                 <span>🏆 Récord</span>
@@ -44,22 +44,36 @@
         <div class="menu-acciones">
             <a href="escanear.html" class="btn btn-primary">📸 Escanear QR de Hoy</a>
             <a href="tareas.html" class="btn btn-secondary">📝 Tareas y Retos Semanales</a>
+            <button class="btn btn-secondary" onclick="cerrarSesion()" style="background: #c0392b; margin-top: 10px; color: white;">🚪 Cerrar Sesión</button>
         </div>
-        <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 20px;">
-            Created with ❤️ by Joyker Quintero
-        </p>
+
+        <!-- Firma Institucional -->
+        <footer class="app-footer">
+            <p>Desarrollado y Diseñado por <span>Joyker Quintero</span></p>
+        </footer>
     </div>
 
     <script src="app.js"></script>
     <script>
-        // Cargar datos dinámicos en la interfaz al abrir
-        const usuario = obtenerDatosUsuario();
-        document.getElementById('num-racha').innerText = usuario.rachaActual;
-        document.getElementById('num-escudos').innerText = usuario.escudos;
-        document.getElementById('num-record').innerText = usuario.rachaMaxima;
-    </script>
+        // Cargar datos dinámicos en la interfaz al abrir de forma segura
+        document.addEventListener('DOMContentLoaded', () => {
+            const usuario = obtenerUsuarioActual();
+            
+            if (!usuario) {
+                window.location.href = 'index.html';
+                return;
+            }
 
-</body>
-</html>
+            // Pintamos los valores reales del usuario en pantalla
+            document.getElementById('num-racha').innerText = usuario.racha_actual || 0;
+            document.getElementById('num-puntos').innerText = usuario.puntos || 0;
+            document.getElementById('num-record').innerText = usuario.racha_maxima || usuario.racha_actual || 0;
+            
+            // Personalizamos el saludo con su nombre si está disponible
+            if(usuario.nombre) {
+                document.getElementById('saludo').innerText = `¡Hola, ${usuario.nombre}! Mantén encendido el fuego.`;
+            }
+        });
+    </script>
 </body>
 </html>
