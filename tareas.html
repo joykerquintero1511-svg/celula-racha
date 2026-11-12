@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafíos y Anuncios</title>
+    <title>Desafíos y Anuncios - Célula Juvenil</title>
     <link rel="icon" href="logoCJ.png" type="image/png">
     <link rel="stylesheet" href="mystyle.css">
+    <!-- Librería oficial de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -13,7 +14,7 @@
     <div class="container" style="max-width: 500px;">
         <header>
             <div class="logo-container">
-        <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
+                <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
             </div>
             <a href="panel.html" class="back-link">⬅️ Volver al Inicio</a>
             <h1>📢 Cartelera y Retos</h1>
@@ -24,7 +25,7 @@
         <div style="margin-bottom: 24px;">
             <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--accent-fuego);">🔥 Avisos Importantes</h3>
             <div id="contenedor-anuncios" style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Se llena con JS -->
+                <p style="color: var(--text-secondary); text-align: center;">Cargando anuncios...</p>
             </div>
         </div>
 
@@ -32,25 +33,32 @@
         <div>
             <h3 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--accent-success);">📝 Desafíos Semanales</h3>
             <div id="contenedor-tareas" style="display: flex; flex-direction: column; gap: 16px;">
-                <!-- Se llena con JS -->
+                <p style="color: var(--text-secondary); text-align: center;">Cargando desafíos...</p>
             </div>
         </div>
-        <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 20px;">
-            Created with ❤️ by Joyker Quintero
-        </p>
-    </div>
+
+        <!-- Firma Institucional -->
+        <footer class="app-footer">
+            <p>Desarrollado y Diseñado por <span>Joyker Quintero</span></p>
+        </footer>
+    </div> <!-- Cierre del container principal -->
 
     <script src="app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            renderizarAnuncios();
-            renderizarTareas();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await renderizarAnuncios();
+            await renderizarTareas();
         });
 
-        function renderizarAnuncios() {
-            let anuncios = obtenerAnunciosGlobales();
+        async function renderizarAnuncios() {
+            let anuncios = await obtenerAnunciosGlobales();
             let cont = document.getElementById('contenedor-anuncios');
             cont.innerHTML = "";
+
+            if (!anuncios || anuncios.length === 0) {
+                cont.innerHTML = "<p style='color: var(--text-secondary); text-align: center;'>No hay anuncios publicados por ahora.</p>";
+                return;
+            }
 
             anuncios.forEach(an => {
                 let card = document.createElement('div');
@@ -59,20 +67,26 @@
                 card.innerHTML = `
                     <h4 style="margin-bottom: 4px; color: var(--text-primary);">${an.titulo}</h4>
                     <p style="margin-bottom: 6px; color: var(--text-secondary);">${an.contenido}</p>
-                    <small style="color: var(--text-secondary); font-size: 0.75rem;">📅 ${an.fecha}</small>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem;">📅 ${an.fecha || ''}</small>
                 `;
                 cont.appendChild(card);
             });
         }
 
-        function renderizarTareas() {
+        async function renderizarTareas() {
             let usuario = obtenerUsuarioActual();
-            let tareas = obtenerTareasGlobales();
             let cont = document.getElementById('contenedor-tareas');
             cont.innerHTML = "";
 
             if(!usuario) {
-                window.location.href = 'login.html';
+                window.location.href = 'index.html';
+                return;
+            }
+
+            let tareas = await obtenerTareasGlobales();
+
+            if (!tareas || tareas.length === 0) {
+                cont.innerHTML = "<p style='color: var(--text-secondary); text-align: center;'>No hay desafíos activos en este momento.</p>";
                 return;
             }
 
@@ -83,10 +97,11 @@
                 let card = document.createElement('div');
                 card.className = "tarea-card";
                 
+                let tipoStr = (t.tipo || 'lectura').toUpperCase();
                 let htmlContenido = `
                     <div class="tarea-header">
-                        <span class="badge lectura">${t.tipo.toUpperCase()}</span>
-                        <span class="puntos-recompensa">+${t.puntos} pts</span>
+                        <span class="badge lectura">${tipoStr}</span>
+                        <span class="puntos-recompensa">+${t.puntos || 20} pts</span>
                     </div>
                     <h3>${t.titulo}</h3>
                     <p>${t.descripcion}</p>
@@ -97,12 +112,14 @@
                 } else {
                     if (t.tipo === 'seleccion' || t.tipo === 'si_no') {
                         htmlContenido += `<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">`;
-                        t.opciones.forEach(op => {
-                            htmlContenido += `<label style="font-size: 0.9rem; color: var(--text-primary); cursor: pointer;"><input type="radio" name="pregunta_${t.id}" value="${op}"> ${op}</label>`;
-                        });
+                        if (t.opciones && Array.isArray(t.opciones)) {
+                            t.opciones.forEach(op => {
+                                htmlContenido += `<label style="font-size: 0.9rem; color: var(--text-primary); cursor: pointer;"><input type="radio" name="pregunta_${t.id}" value="${op}"> ${op}</label>`;
+                            });
+                        }
                         htmlContenido += `</div>`;
                         htmlContenido += `<button class="btn btn-primary" onclick="verificarRespuesta(${t.id}, '${t.tipo}')">Enviar Respuesta</button>`;
-                    } else if (t.tipo === 'abierta') {
+                    } else {
                         htmlContenido += `
                             <div class="input-group" style="margin-bottom: 12px;">
                                 <input type="text" id="resp_${t.id}" placeholder="Escribe tu respuesta aquí...">
@@ -117,13 +134,13 @@
             });
         }
 
-        function verificarRespuesta(idTarea, tipo) {
-            let tareas = obtenerTareasGlobales();
+        async function verificarRespuesta(idTarea, tipo) {
+            let tareas = await obtenerTareasGlobales();
             let tarea = tareas.find(t => t.id === idTarea);
             let usuario = obtenerUsuarioActual();
-            let db = obtenerBaseDatosLocal();
 
             let respuestaValida = false;
+            let respuestaCorrectaBD = tarea.respuesta_correcta || tarea.respuestaCorrecta;
 
             if (tipo === 'seleccion' || tipo === 'si_no') {
                 let seleccionada = document.querySelector(`input[name="pregunta_${idTarea}"]:checked`);
@@ -131,46 +148,41 @@
                     alert("Por favor selecciona una opción.");
                     return;
                 }
-                if (seleccionada.value.trim().toLowerCase() === tarea.respuestaCorrecta.trim().toLowerCase() || !tarea.respuestaCorrecta) {
+                if (!respuestaCorrectaBD || seleccionada.value.trim().toLowerCase() === respuestaCorrectaBD.trim().toLowerCase()) {
                     respuestaValida = true;
                 } else {
                     alert("❌ Respuesta incorrecta. ¡Inténtalo de nuevo!");
                     return;
                 }
-            } else if (tipo === 'abierta') {
+            } else {
                 let texto = document.getElementById(`resp_${idTarea}`).value.trim();
                 if (!texto) {
                     alert("Escribe una respuesta antes de enviar.");
                     return;
                 }
-                // Las abiertas siempre se dan por válidas al redactar
                 respuestaValida = true;
             }
 
             if (respuestaValida) {
-                alert(`🎉 ¡Excelente! Respuesta correcta. Ganaste +${tarea.puntos} puntos ⭐.`);
+                alert(`🎉 ¡Excelente! Respuesta correcta. Ganaste +${tarea.puntos || 20} puntos ⭐.`);
                 
-                // Actualizar usuario local y base de datos global
                 if (!usuario.tareasCompletadas) usuario.tareasCompletadas = [];
                 usuario.tareasCompletadas.push(tarea.id);
-                usuario.puntos = (usuario.puntos || 0) + tarea.puntos;
+                usuario.puntos = (usuario.puntos || 0) + (tarea.puntos || 20);
 
-                // Actualizar sesión activa
                 localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
 
-                // Actualizar en la BD general de usuarios
-                let index = db.findIndex(u => u.id === usuario.id);
-                if (index !== -1) {
-                    db[index] = usuario;
-                    guardarBaseDatosLocal(db);
+                // Actualizar en la base de datos de Supabase si el cliente está activo
+                if (db) {
+                    await db.from('usuarios').update({
+                        puntos: usuario.puntos,
+                        tareasCompletadas: usuario.tareasCompletadas
+                    }).eq('id', usuario.id);
                 }
 
                 renderizarTareas();
             }
         }
     </script>
-    </div> <!-- Cierre del container principal -->
-</body>
-</html>
 </body>
 </html>
