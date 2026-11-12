@@ -176,6 +176,34 @@ async function cambiarEstadoUsuario(idUsuario, nuevoEstado) {
 }
 
 // ==========================================
+// ELIMINAR JOVEN / USUARIO (Panel Admin)
+// ==========================================
+async function eliminarUsuarioNube(idUsuario, nombreUsuario) {
+    if (!db) return;
+
+    // Confirmación para evitar accidentes
+    let confirmar = confirm(`⚠️ ¿Estás seguro de que deseas eliminar permanentemente a "${nombreUsuario}" de la base de datos?`);
+    if (!confirmar) return;
+
+    try {
+        const { error } = await db
+            .from('usuarios')
+            .delete()
+            .eq('id', idUsuario);
+
+        if (error) {
+            alert("❌ Error al eliminar usuario: " + error.message);
+        } else {
+            alert("🗑️ Usuario eliminado correctamente.");
+            cargarSolicitudesNube(); // Recarga la lista al instante
+        }
+    } catch (err) {
+        console.error("Excepción al eliminar:", err);
+        alert("❌ Error de conexión al intentar eliminar.");
+    }
+}
+
+// ==========================================
 // FUNCIONES DE TAREAS Y ANUNCIOS EN LA NUBE
 // ==========================================
 async function obtenerTareasGlobales() {

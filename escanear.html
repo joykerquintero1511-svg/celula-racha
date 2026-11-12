@@ -8,6 +8,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <header>
+    <div class="logo-container">
+        <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
+    </div>
+    <h1>🔥 Celula Juvenil</h1>
+    <p id="saludo">¡Mantén encendido el fuego de la palabra!</p>
+</header>
 
     <div class="container text-center">
         <h2>Apunta al Código QR</h2>
@@ -16,6 +23,10 @@
         <div id="reader" style="width: 100%; max-width: 350px; margin: 20px auto;"></div>
         
         <a href="index.html" class="btn btn-secondary">Regresar al Inicio</a>
+
+        <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 20px;">
+            Created with ❤️ by Joyker Quintero
+        </p>
     </div>
 
     <!-- Librería para leer QR con la cámara web del celular -->
@@ -34,5 +45,9 @@
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
         html5QrcodeScanner.render(onScanSuccess);
     </script>
+
+    
+</body>
+</html>
 </body>
 </html>

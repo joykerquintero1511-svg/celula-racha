@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - Célula Juvenil</title>
+    <link rel="icon" href="logoCJ.png" type="image/png">
     <link rel="stylesheet" href="mystyle.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -11,9 +12,12 @@
 
     <div class="container">
         <header>
-            <h1>🔥 Célula Juvenil</h1>
-            <p>Ingresa con tu número o regístrate para comenzar</p>
-        </header>
+    <div class="logo-container">
+        <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
+    </div>
+    <h1>🔥"Nadie tome en poco tu Juventud" </h1>
+    <p id="saludo">¡Mantén encendido el fuego de la palabra!</p>
+</header>
 
         <!-- Pestañas de Login / Registro -->
         <div class="tab-menu">
@@ -46,6 +50,9 @@
         <div style="margin-top: 20px; text-align: center;">
             <a href="admin.html" style="color: var(--text-secondary); font-size: 0.8rem; text-decoration: none;">⚙️ Panel de Líder (Administrador)</a>
         </div>
+        <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 20px;">
+            Created with ❤️ by Joyker Quintero
+        </p>
     </div>
 
     <script src="app.js"></script>
@@ -76,5 +83,8 @@
         registrarNuevoJoven(nombre, tel);
     }
 </script>
+ <!-- Cierre del container principal -->
+</body>
+</html>
 </body>
 </html>

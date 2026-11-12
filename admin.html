@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Líder - Célula</title>
     <link rel="stylesheet" href="mystyle.css">
-    <!-- Librería de Supabase -->
+    <!-- Librería oficial de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <div class="container" style="max-width: 650px;">
+    <div class="container" style="max-width: 680px;">
         <header>
+            <div class="logo-container">
+                <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
+            </div>
             <a href="login.html" class="back-link">⬅️ Cerrar Panel</a>
             <h1>⚙️ Panel de Administración</h1>
             <p>Control total de la célula en tiempo real</p>
@@ -20,7 +23,7 @@
         <!-- Autenticación de Líder -->
         <div id="admin-auth" style="text-align: center; padding: 20px 0;">
             <p style="margin-bottom: 10px;">Ingresa la contraseña de líder:</p>
-            <input type="password" id="admin-pass" placeholder="Contraseña" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white; width: 80%; margin-bottom: 10px;">
+            <input type="password" id="admin-pass" placeholder="Contraseña" style="padding: 12px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white; width: 80%; margin-bottom: 12px;">
             <br>
             <button class="btn btn-primary" onclick="verificarAdmin()" style="width: 80%; margin: auto;">Entrar al Panel</button>
         </div>
@@ -28,35 +31,308 @@
         <!-- Contenido Completo del Panel -->
         <div id="admin-panel" style="display: none;">
             
-            <div class="tab-menu" style="margin-bottom: 20px;">
-                <button class="tab-btn active" onclick="cambiarTabAdmin('jovenes')">Jóvenes Registrados</button>
+            <!-- Menú de Pestañas -->
+            <div class="tab-menu" style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="tab-btn active" id="tab-jovenes" onclick="cambiarTabAdmin('jovenes')" style="flex: 1;">👥 Jóvenes</button>
+                <button class="tab-btn" id="tab-tareas" onclick="cambiarTabAdmin('tareas')" style="flex: 1;">📖 Tareas</button>
+                <button class="tab-btn" id="tab-anuncios" onclick="cambiarTabAdmin('anuncios')" style="flex: 1;">📢 Anuncios</button>
             </div>
 
-            <!-- SECCIÓN: JÓVENES -->
+            <!-- ========================================== -->
+            <!-- SECCIÓN 1: JÓVENES                         -->
+            <!-- ========================================== -->
             <div id="sec-jovenes" class="admin-seccion">
-                <h3>Aprobación de Miembros (Nube)</h3>
+                <h3>Aprobación y Control de Miembros</h3>
                 <div id="lista-solicitudes" style="margin-top: 15px; display: flex; flex-direction: column; gap: 12px;">
-                    <p style="color: var(--text-secondary); text-align: center;">Cargando solicitudes...</p>
+                    <p style="color: var(--text-secondary); text-align: center;">Consultando base de datos...</p>
                 </div>
             </div>
 
+            <!-- ========================================== -->
+            <!-- SECCIÓN 2: TAREAS                          -->
+            <!-- ========================================== -->
+            <div id="sec-tareas" class="admin-seccion" style="display: none;">
+                <h3>➕ Publicar Nueva Tarea</h3>
+                <div class="tarea-card" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <input type="text" id="tarea-titulo" placeholder="Título (Ej: Lectura de Marcos 4)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                    
+                    <textarea id="tarea-desc" rows="2" placeholder="Descripción o pregunta de la tarea..." style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white; font-family: inherit;"></textarea>
+                    
+                    <select id="tarea-tipo" onchange="toggleOpcionesTarea()" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <option value="seleccion">Quiz / Selección Múltiple</option>
+                        <option value="lectura">Lectura / Memorización (Confirmación directa)</option>
+                    </select>
+
+                    <!-- Campos extra si es Selección Múltiple -->
+                    <div id="bloque-opciones" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                        <small style="color: var(--text-secondary);">Opciones de respuesta (escribe las 3 opciones y indica cuál es la correcta):</small>
+                        <input type="text" id="op-1" placeholder="Opción 1" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <input type="text" id="op-2" placeholder="Opción 2" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <input type="text" id="op-3" placeholder="Opción 3" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <input type="text" id="op-correcta" placeholder="Respuesta correcta exacta (Ej: Opción 1)" style="padding: 8px; border-radius: 6px; border: 1px solid #2ecc71; background: var(--bg-color); color: white;">
+                    </div>
+
+                    <input type="number" id="tarea-puntos" value="20" placeholder="Puntos que otorga (Ej: 20)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+
+                    <button class="btn btn-primary" onclick="crearTareaNube()">Guardar y Publicar Tarea</button>
+                </div>
+
+                <h3 style="margin-top: 25px;">📋 Tareas Activas en la Nube</h3>
+                <div id="lista-tareas-admin" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SECCIÓN 3: ANUNCIOS                        -->
+            <!-- ========================================== -->
+            <div id="sec-anuncios" class="admin-seccion" style="display: none;">
+                <h3>📢 Publicar Nuevo Anuncio</h3>
+                <div class="tarea-card" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <input type="text" id="anuncio-titulo" placeholder="Título del aviso (Ej: 🔥 Ayuno este Sábado)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                    <textarea id="anuncio-contenido" rows="3" placeholder="Escribe el mensaje completo para los jóvenes..." style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white; font-family: inherit;"></textarea>
+                    <button class="btn btn-primary" onclick="crearAnuncioNube()">Publicar Anuncio</button>
+                </div>
+
+                <h3 style="margin-top: 25px;">📌 Anuncios Publicados</h3>
+                <div id="lista-anuncios-admin" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 20px;">
+            Created with ❤️ by Joyker Quintero
+        </p>
+
         </div>
-    </div>
 
+        
     <script src="app.js"></script>
-<script>
-    const CLAVE_LIDER = "celula2026"; // Tu clave de líder
+    <script>
+        const CLAVE_LIDER = "celula2026";
 
-    function verificarAdmin() {
-        let pass = document.getElementById('admin-pass').value;
-        if(pass === CLAVE_LIDER) {
-            document.getElementById('admin-auth').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'block';
-            cargarSolicitudesNube();
-        } else {
-            alert("Contraseña incorrecta");
+        function verificarAdmin() {
+            let pass = document.getElementById('admin-pass').value;
+            if (pass === CLAVE_LIDER) {
+                document.getElementById('admin-auth').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                cargarSolicitudesNube();
+            } else {
+                alert("❌ Contraseña incorrecta");
+            }
         }
-    }
-</script>
+
+        function cambiarTabAdmin(seccion) {
+            document.querySelectorAll('.admin-seccion').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById('sec-' + seccion).style.display = 'block';
+            document.getElementById('tab-' + seccion).classList.add('active');
+
+            if (seccion === 'jovenes') cargarSolicitudesNube();
+            if (seccion === 'tareas') cargarTareasAdmin();
+            if (seccion === 'anuncios') cargarAnunciosAdmin();
+        }
+
+        function toggleOpcionesTarea() {
+            const tipo = document.getElementById('tarea-tipo').value;
+            document.getElementById('bloque-opciones').style.display = (tipo === 'seleccion') ? 'flex' : 'none';
+        }
+
+        // ==========================================
+        // ACTUALIZACIÓN DE TARJETAS CON BOTÓN ELIMINAR
+        // ==========================================
+        async function cargarSolicitudesNube() {
+            const contenedor = document.getElementById('lista-solicitudes');
+            if (!contenedor) return;
+
+            if (!db) {
+                contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error: Falta inicializar Supabase.</p>";
+                return;
+            }
+
+            contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>Consultando base de datos...</p>";
+
+            try {
+                const { data, error } = await db
+                    .from('usuarios')
+                    .select('*')
+                    .order('id', { ascending: false });
+
+                if (error) {
+                    contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error Supabase: ${error.message}</p>`;
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay jóvenes registrados todavía.</p>";
+                    return;
+                }
+
+                contenedor.innerHTML = "";
+                data.forEach((user) => {
+                    const card = document.createElement('div');
+                    card.className = "tarea-card";
+                    card.innerHTML = `
+                        <div class="tarea-header">
+                            <h3>${user.nombre}</h3>
+                            <span class="badge ${user.aprobado ? 'memorizar' : 'lectura'}">
+                                ${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
+                            </span>
+                        </div>
+                        <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual || 0} semanas</p>
+                        
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            ${!user.aprobado 
+                                ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem; flex: 1;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
+                                : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; flex: 1;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
+                            
+                            <button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; background: #c0392b; color: white;" onclick="eliminarUsuarioNube(${user.id}, '${user.nombre}')">🗑️ Eliminar</button>
+                        </div>
+                    `;
+                    contenedor.appendChild(card);
+                });
+            } catch (err) {
+                contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error de red: ${err.message}</p>`;
+            }
+        }
+
+        // ==========================================
+        // GESTIÓN DE TAREAS EN SUPABASE
+        // ==========================================
+        async function crearTareaNube() {
+            const titulo = document.getElementById('tarea-titulo').value.trim();
+            const descripcion = document.getElementById('tarea-desc').value.trim();
+            const tipo = document.getElementById('tarea-tipo').value;
+            const puntos = parseInt(document.getElementById('tarea-puntos').value) || 20;
+
+            if (!titulo || !descripcion) {
+                alert("⚠️ Completa el título y la descripción de la tarea.");
+                return;
+            }
+
+            let opciones = null;
+            let respuesta_correcta = null;
+
+            if (tipo === 'seleccion') {
+                const op1 = document.getElementById('op-1').value.trim();
+                const op2 = document.getElementById('op-2').value.trim();
+                const op3 = document.getElementById('op-3').value.trim();
+                respuesta_correcta = document.getElementById('op-correcta').value.trim();
+
+                if (!op1 || !op2 || !respuesta_correcta) {
+                    alert("⚠️ Completa al menos 2 opciones y la respuesta correcta.");
+                    return;
+                }
+                opciones = [op1, op2, op3].filter(o => o !== "");
+            }
+
+            const { error } = await db.from('tareas').insert([{
+                titulo,
+                descripcion,
+                tipo,
+                opciones,
+                respuesta_correcta,
+                puntos
+            }]);
+
+            if (error) {
+                alert("❌ Error al crear tarea: " + error.message);
+            } else {
+                alert("✅ ¡Tarea publicada en la nube!");
+                document.getElementById('tarea-titulo').value = "";
+                document.getElementById('tarea-desc').value = "";
+                document.getElementById('op-1').value = "";
+                document.getElementById('op-2').value = "";
+                document.getElementById('op-3').value = "";
+                document.getElementById('op-correcta').value = "";
+                cargarTareasAdmin();
+            }
+        }
+
+        async function cargarTareasAdmin() {
+            const cont = document.getElementById('lista-tareas-admin');
+            cont.innerHTML = "<p style='color: var(--text-secondary);'>Cargando tareas...</p>";
+
+            const { data, error } = await db.from('tareas').select('*').order('id', { ascending: false });
+            if (error || !data || data.length === 0) {
+                cont.innerHTML = "<p style='color: var(--text-secondary);'>No hay tareas creadas aún.</p>";
+                return;
+            }
+
+            cont.innerHTML = "";
+            data.forEach(t => {
+                cont.innerHTML += `
+                    <div class="tarea-card">
+                        <div class="tarea-header">
+                            <h4>${t.titulo}</h4>
+                            <span class="badge memorizar">+${t.puntos} pts</span>
+                        </div>
+                        <p style="font-size: 0.9rem; margin: 6px 0;">${t.descripcion}</p>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; background: #c0392b;" onclick="eliminarTareaNube(${t.id})">🗑️ Eliminar</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function eliminarTareaNube(id) {
+            if (!confirm("¿Seguro que deseas eliminar esta tarea?")) return;
+            const { error } = await db.from('tareas').delete().eq('id', id);
+            if (!error) cargarTareasAdmin();
+        }
+
+        // ==========================================
+        // GESTIÓN DE ANUNCIOS EN SUPABASE
+        // ==========================================
+        async function crearAnuncioNube() {
+            const titulo = document.getElementById('anuncio-titulo').value.trim();
+            const contenido = document.getElementById('anuncio-contenido').value.trim();
+            const fecha = new Date().toISOString().split('T')[0];
+
+            if (!titulo || !contenido) {
+                alert("⚠️ Escribe un título y contenido para el anuncio.");
+                return;
+            }
+
+            const { error } = await db.from('anuncios').insert([{ titulo, contenido, fecha }]);
+            if (error) {
+                alert("❌ Error al publicar anuncio: " + error.message);
+            } else {
+                alert("✅ ¡Anuncio publicado para toda la célula!");
+                document.getElementById('anuncio-titulo').value = "";
+                document.getElementById('anuncio-contenido').value = "";
+                cargarAnunciosAdmin();
+            }
+        }
+
+        async function cargarAnunciosAdmin() {
+            const cont = document.getElementById('lista-anuncios-admin');
+            cont.innerHTML = "<p style='color: var(--text-secondary);'>Cargando anuncios...</p>";
+
+            const { data, error } = await db.from('anuncios').select('*').order('id', { ascending: false });
+            if (error || !data || data.length === 0) {
+                cont.innerHTML = "<p style='color: var(--text-secondary);'>No hay anuncios publicados.</p>";
+                return;
+            }
+
+            cont.innerHTML = "";
+            data.forEach(a => {
+                cont.innerHTML += `
+                    <div class="tarea-card">
+                        <div class="tarea-header">
+                            <h4>${a.titulo}</h4>
+                            <small style="color: var(--text-secondary);">${a.fecha}</small>
+                        </div>
+                        <p style="font-size: 0.9rem; margin: 6px 0;">${a.contenido}</p>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; background: #c0392b;" onclick="eliminarAnuncioNube(${a.id})">🗑️ Eliminar</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function eliminarAnuncioNube(id) {
+            if (!confirm("¿Eliminar este anuncio?")) return;
+            const { error } = await db.from('anuncios').delete().eq('id', id);
+            if (!error) cargarAnunciosAdmin();
+        }
+    </script>
+    <!-- Firma Institucional -->
+        
+
 </body>
 </html>
