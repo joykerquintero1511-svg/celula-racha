@@ -257,11 +257,24 @@ async function registrarAsistenciaQR() {
     }
 
     try {
-        // Incrementamos la racha y puntos del usuario
-        let nuevaRacha = (usuario.racha_actual || 0) + 1;
-        let nuevosPuntos = (usuario.puntos || 0) + 50; // 50 puntos por asistencia
+        // 1. Consultamos el estado actual del usuario directamente en Supabase para evitar desfases
+        const { data: usuarioActualizado, error: errorConsulta } = await db
+            .from('usuarios')
+            .select('*')
+            .eq('id', usuario.id)
+            .single();
 
-        const { error } = await db
+        if (errorConsulta || !usuarioActualizado) {
+            alert("❌ No se pudo verificar tu usuario en la base de datos.");
+            return;
+        }
+
+        // 2. Calculamos los nuevos valores sumando a lo que hay en la nube
+        let nuevaRacha = (usuarioActualizado.racha_actual || 0) + 1;
+        let nuevosPuntos = (usuarioActualizado.puntos || 0) + 50; // 50 puntos por asistencia
+
+        // 3. Actualizamos en la base de datos de Supabase
+        const { error: errorUpdate } = await db
             .from('usuarios')
             .update({ 
                 racha_actual: nuevaRacha,
@@ -269,19 +282,24 @@ async function registrarAsistenciaQR() {
             })
             .eq('id', usuario.id);
 
-        if (error) {
-            alert("❌ Error al registrar asistencia: " + error.message);
+        if (errorUpdate) {
+            alert("❌ Error al registrar asistencia: " + errorUpdate.message);
         } else {
-            // Actualizamos la sesión local
-            usuario.racha_actual = nuevaRacha;
-            usuario.puntos = nuevosPuntos;
-            localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
+            // 4. Creamos el objeto fresco con los datos ya sumados
+            let usuarioFrescoalStorage = {
+                ...usuarioActualizado,
+                racha_actual: nuevaRacha,
+                puntos: nuevosPuntos
+            };
+
+            // 5. Guardamos en el localStorage para que el panel principal los lea al instante
+            localStorage.setItem('celula_sesion_activa', JSON.stringify(usuarioFrescoalStorage));
 
             alert(`🔥 ¡Asistencia registrada con éxito! Racha actual: ${nuevaRacha} semanas. ¡Ganaste +50 puntos! ⭐`);
             window.location.href = 'panel.html';
         }
     } catch (err) {
         console.error("Excepción al registrar asistencia:", err);
-        alert("❌ Ocurrió un error inesperado.");
+        alert("❌ Ocurrió un error inesperado al procesar la asistencia.");
     }
 }
