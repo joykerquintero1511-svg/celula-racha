@@ -240,3 +240,48 @@ async function obtenerAnunciosGlobales() {
     }
     return data;
 }
+// ==========================================
+// REGISTRAR ASISTENCIA DESDE EL ESCÁNER QR
+// ==========================================
+async function registrarAsistenciaQR() {
+    let usuario = obtenerUsuarioActual();
+    if (!usuario) {
+        alert("⚠️ Debes iniciar sesión antes de escanear tu asistencia.");
+        window.location.href = 'index.html';
+        return;
+    }
+
+    if (!db) {
+        alert("❌ Error de conexión con la base de datos.");
+        return;
+    }
+
+    try {
+        // Incrementamos la racha y puntos del usuario
+        let nuevaRacha = (usuario.racha_actual || 0) + 1;
+        let nuevosPuntos = (usuario.puntos || 0) + 50; // 50 puntos por asistencia
+
+        const { error } = await db
+            .from('usuarios')
+            .update({ 
+                racha_actual: nuevaRacha,
+                puntos: nuevosPuntos
+            })
+            .eq('id', usuario.id);
+
+        if (error) {
+            alert("❌ Error al registrar asistencia: " + error.message);
+        } else {
+            // Actualizamos la sesión local
+            usuario.racha_actual = nuevaRacha;
+            usuario.puntos = nuevosPuntos;
+            localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
+
+            alert(`🔥 ¡Asistencia registrada con éxito! Racha actual: ${nuevaRacha} semanas. ¡Ganaste +50 puntos! ⭐`);
+            window.location.href = 'panel.html';
+        }
+    } catch (err) {
+        console.error("Excepción al registrar asistencia:", err);
+        alert("❌ Ocurrió un error inesperado.");
+    }
+}
