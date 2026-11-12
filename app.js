@@ -2,12 +2,19 @@
 // CONEXIÓN OFICIAL CON SUPABASE (Nube)
 // ==========================================
 const SUPABASE_URL = "https://iluuavczdqcnpuhvsgpn.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_WwLl-Up4qwf2qBTktuog2A_G1j7ZJhe"; // Pega aquí la clave larga que dice "anon" o "public" en Supabase (Settings > API)
+const SUPABASE_ANON_KEY = "sb_publishable_WwLl-Up4qwf2qBTktuog2A_G1j7ZJhe";
 
-// Inicializar cliente de Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Inicializar cliente de Supabase de forma segura (sin conflicto de nombres)
+let db = null;
+if (window.supabase && typeof window.supabase.createClient === "function") {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+    console.error("❌ CRÍTICO: No se cargó la librería CDN de Supabase en el HTML.");
+}
 
-// Obtener usuario guardado en este dispositivo (sesión local)
+// ==========================================
+// GESTIÓN DE SESIÓN LOCAL
+// ==========================================
 function obtenerUsuarioActual() {
     return JSON.parse(localStorage.getItem('celula_sesion_activa')) || null;
 }
@@ -20,41 +27,61 @@ function cerrarSesion() {
 // ==========================================
 // FUNCIONES DE USUARIOS (Conectado a la Nube)
 // ==========================================
-
 async function registrarNuevoJoven(nombre, telefono) {
+    if (!db) {
+        alert("❌ Error técnico: La librería de Supabase no cargó en esta página. Revisa el <head> del HTML.");
+        return false;
+    }
+
     try {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('usuarios')
-            .insert([{ nombre: nombre, telefono: telefono, aprobado: false }]);
+            .insert([{ 
+                nombre: nombre.trim(), 
+                telefono: telefono.trim(), 
+                aprobado: false 
+            }])
+            .select();
 
         if (error) {
             if (error.code === '23505') {
                 alert("⚠️ Este número de teléfono ya está registrado.");
             } else {
-                alert("Error al registrarse: " + error.message);
+                alert("❌ Error de base de datos: " + error.message);
             }
+            console.error("Detalle error insert:", error);
             return false;
         }
 
-        alert("¡Registro exitoso! Tu cuenta está pendiente de aprobación por el líder.");
+        alert("✅ ¡Registro exitoso! Tu cuenta está pendiente de aprobación por el líder.");
         window.location.href = 'login.html';
         return true;
     } catch (err) {
-        console.error(err);
-        alert("Ocurrió un error de conexión.");
+        console.error("Excepción al registrar:", err);
+        alert("❌ Ocurrió un error de conexión: " + err.message);
         return false;
     }
 }
 
 async function iniciarSesion(telefono) {
+    if (!db) {
+        alert("❌ Error técnico: La librería de Supabase no cargó en esta página.");
+        return false;
+    }
+
     try {
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('usuarios')
             .select('*')
-            .eq('telefono', telefono)
-            .single();
+            .eq('telefono', telefono.trim())
+            .maybeSingle();
 
-        if (error || !data) {
+        if (error) {
+            alert("❌ Error al consultar usuario: " + error.message);
+            return false;
+        }
+
+        if (!data) {
             alert("❌ Usuario no encontrado. Por favor, regístrate primero.");
             return false;
         }
@@ -64,25 +91,97 @@ async function iniciarSesion(telefono) {
             return false;
         }
 
-        // Guardar sesión activa localmente en este teléfono
         localStorage.setItem('celula_sesion_activa', JSON.stringify(data));
         window.location.href = 'index.html';
         return true;
     } catch (err) {
-        console.error(err);
-        alert("Error al iniciar sesión.");
+        console.error("Excepción en login:", err);
+        alert("❌ Error al iniciar sesión: " + err.message);
         return false;
+    }
+}
+
+// ==========================================
+// FUNCIONES DEL PANEL DE ADMINISTRADOR
+// ==========================================
+async function cargarSolicitudesNube() {
+    const contenedor = document.getElementById('lista-solicitudes');
+    if (!contenedor) return;
+
+    if (!db) {
+        contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error: Falta el script CDN de Supabase en admin.html.</p>";
+        return;
+    }
+
+    contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>Consultando base de datos...</p>";
+
+    try {
+        const { data, error } = await db
+            .from('usuarios')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) {
+            contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error Supabase: ${error.message}</p>`;
+            console.error("Error consultando usuarios:", error);
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay jóvenes registrados todavía.</p>";
+            return;
+        }
+
+        contenedor.innerHTML = "";
+        data.forEach((user) => {
+            const card = document.createElement('div');
+            card.className = "tarea-card";
+            card.innerHTML = `
+                <div class="tarea-header">
+                    <h3>${user.nombre}</h3>
+                    <span class="badge ${user.aprobado ? 'memorizar' : 'lectura'}">
+                        ${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
+                    </span>
+                </div>
+                <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual || 0} semanas</p>
+                ${!user.aprobado 
+                    ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem; margin-top: 8px;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
+                    : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; margin-top: 8px;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
+            `;
+            contenedor.appendChild(card);
+        });
+    } catch (err) {
+        contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error de red: ${err.message}</p>`;
+        console.error("Excepción en cargarSolicitudesNube:", err);
+    }
+}
+
+async function cambiarEstadoUsuario(idUsuario, nuevoEstado) {
+    if (!db) return;
+
+    try {
+        const { error } = await db
+            .from('usuarios')
+            .update({ aprobado: nuevoEstado })
+            .eq('id', idUsuario);
+
+        if (error) {
+            alert("❌ Error al actualizar estado: " + error.message);
+        } else {
+            cargarSolicitudesNube();
+        }
+    } catch (err) {
+        alert("❌ Error de conexión al actualizar: " + err.message);
     }
 }
 
 // ==========================================
 // FUNCIONES DE TAREAS Y ANUNCIOS EN LA NUBE
 // ==========================================
-
 async function obtenerTareasGlobales() {
-    const { data, error } = await supabase.from('tareas').select('*');
+    if (!db) return [];
+    const { data, error } = await db.from('tareas').select('*');
     if (error || !data || data.length === 0) {
-        // Tarea por defecto si está vacío
         return [
             {
                 id: 1,
@@ -99,7 +198,8 @@ async function obtenerTareasGlobales() {
 }
 
 async function obtenerAnunciosGlobales() {
-    const { data, error } = await supabase.from('anuncios').select('*');
+    if (!db) return [];
+    const { data, error } = await db.from('anuncios').select('*');
     if (error || !data || data.length === 0) {
         return [
             {

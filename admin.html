@@ -44,67 +44,19 @@
     </div>
 
     <script src="app.js"></script>
-    <script>
-        const CLAVE_LIDER = "celula2026"; // Tu clave de líder
+<script>
+    const CLAVE_LIDER = "celula2026"; // Tu clave de líder
 
-        function verificarAdmin() {
-            let pass = document.getElementById('admin-pass').value;
-            if(pass === CLAVE_LIDER) {
-                document.getElementById('admin-auth').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'block';
-                cargarSolicitudesNube();
-            } else {
-                alert("Contraseña incorrecta");
-            }
+    function verificarAdmin() {
+        let pass = document.getElementById('admin-pass').value;
+        if(pass === CLAVE_LIDER) {
+            document.getElementById('admin-auth').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            cargarSolicitudesNube();
+        } else {
+            alert("Contraseña incorrecta");
         }
-
-        async function cargarSolicitudesNube() {
-            let contenedor = document.getElementById('lista-solicitudes');
-            contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>Consultando base de datos...</p>";
-
-            const { data, error } = await supabase.from('usuarios').select('*').order('id', { ascending: false });
-
-            if (error) {
-                contenedor.innerHTML = "<p style='text-align: center; color: red;'>Error al cargar los usuarios de la nube.</p>";
-                console.error(error);
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay jóvenes registrados todavía.</p>";
-                return;
-            }
-
-            contenedor.innerHTML = "";
-            data.forEach((user) => {
-                let card = document.createElement('div');
-                card.className = "tarea-card";
-                card.innerHTML = `
-                    <div class="tarea-header">
-                        <h3>${user.nombre}</h3>
-                        <span class="badge ${user.aprobado ? 'memorizar' : 'lectura'}">${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}</span>
-                    </div>
-                    <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual} semanas</p>
-                    ${!user.aprobado 
-                        ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
-                        : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
-                `;
-                contenedor.appendChild(card);
-            });
-        }
-
-        async function cambiarEstadoUsuario(idUsuario, nuevoEstado) {
-            const { error } = await supabase
-                .from('usuarios')
-                .update({ aprobado: nuevoEstado })
-                .eq('id', idUsuario);
-
-            if (error) {
-                alert("Error al actualizar el estado: " + error.message);
-            } else {
-                cargarSolicitudesNube(); // Recargar la lista al instante
-            }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
