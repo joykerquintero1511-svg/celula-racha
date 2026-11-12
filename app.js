@@ -21,7 +21,7 @@ function obtenerUsuarioActual() {
 
 function cerrarSesion() {
     localStorage.removeItem('celula_sesion_activa');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
 }
 
 // ==========================================
@@ -54,7 +54,7 @@ async function registrarNuevoJoven(nombre, telefono) {
         }
 
         alert("✅ ¡Registro exitoso! Tu cuenta está pendiente de aprobación por el líder.");
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return true;
     } catch (err) {
         console.error("Excepción al registrar:", err);

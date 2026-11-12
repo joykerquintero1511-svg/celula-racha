@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Célula Juvenil - Racha</title>
+    <title>Acceso - Célula Juvenil</title>
+    <link rel="icon" href="logoCJ.png" type="image/png">
     <link rel="stylesheet" href="mystyle.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -14,35 +15,40 @@
     <div class="logo-container">
         <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
     </div>
-    <h1>🔥 Celula Juvenil</h1>
+    <h1>🔥"Nadie tome en poco tu Juventud" </h1>
     <p id="saludo">¡Mantén encendido el fuego de la palabra!</p>
 </header>
 
-        <!-- Tarjeta de Racha Estilo Duolingo -->
-        <div class="racha-card">
-            <div class="fuego-animado">🔥</div>
-            <div class="racha-info">
-                <h2 id="num-racha">0</h2>
-                <p>Semanas Consecutivas</p>
-            </div>
+        <!-- Pestañas de Login / Registro -->
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar Sesión</button>
+            <button class="tab-btn" onclick="cambiarTab('registro')">Registrarse</button>
         </div>
 
-        <!-- Estado de Escudos y Récord -->
-        <div class="stats-grid">
-            <div class="stat-box">
-                <span>🛡️ Escudos</span>
-                <b id="num-escudos">1</b>
+        <!-- Formulario de Login -->
+        <div id="form-login" class="form-seccion">
+            <div class="input-group">
+                <label>Número de Teléfono</label>
+                <input type="tel" id="login-tel" placeholder="Ej: 04121234567">
             </div>
-            <div class="stat-box">
-                <span>🏆 Récord</span>
-                <b id="num-record">0</b>
-            </div>
+            <button class="btn btn-primary" onclick="ejecutarLogin()">Entrar a mi Racha</button>
         </div>
 
-        <!-- Botones de Acción -->
-        <div class="menu-acciones">
-            <a href="escanear.html" class="btn btn-primary">📸 Escanear QR de Hoy</a>
-            <a href="tareas.html" class="btn btn-secondary">📝 Tareas y Retos Semanales</a>
+        <!-- Formulario de Registro -->
+        <div id="form-registro" class="form-seccion" style="display: none;">
+            <div class="input-group">
+                <label>Nombre y Apellido</label>
+                <input type="text" id="reg-nombre" placeholder="Tu nombre completo">
+            </div>
+            <div class="input-group">
+                <label>Número de Teléfono</label>
+                <input type="tel" id="reg-tel" placeholder="Ej: 04121234567">
+            </div>
+            <button class="btn btn-primary" onclick="ejecutarRegistro()">Solicitar Registro</button>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="admin.html" style="color: var(--text-secondary); font-size: 0.8rem; text-decoration: none;">⚙️ Panel de Líder (Administrador)</a>
         </div>
         <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 20px;">
             Created with ❤️ by Joyker Quintero
@@ -50,14 +56,34 @@
     </div>
 
     <script src="app.js"></script>
-    <script>
-        // Cargar datos dinámicos en la interfaz al abrir
-        const usuario = obtenerDatosUsuario();
-        document.getElementById('num-racha').innerText = usuario.rachaActual;
-        document.getElementById('num-escudos').innerText = usuario.escudos;
-        document.getElementById('num-record').innerText = usuario.rachaMaxima;
-    </script>
+<script>
+    function cambiarTab(tipo) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(tipo === 'login') {
+            document.getElementById('form-login').style.display = 'block';
+            document.getElementById('form-registro').style.display = 'none';
+            event.target.classList.add('active');
+        } else {
+            document.getElementById('form-login').style.display = 'none';
+            document.getElementById('form-registro').style.display = 'block';
+            event.target.classList.add('active');
+        }
+    }
 
+    function ejecutarLogin() {
+        let tel = document.getElementById('login-tel').value.trim();
+        if(!tel) { alert("Ingresa tu teléfono"); return; }
+        iniciarSesion(tel);
+    }
+
+    function ejecutarRegistro() {
+        let nombre = document.getElementById('reg-nombre').value.trim();
+        let tel = document.getElementById('reg-tel').value.trim();
+        if(!nombre || !tel) { alert("Completa todos los campos"); return; }
+        registrarNuevoJoven(nombre, tel);
+    }
+</script>
+ <!-- Cierre del container principal -->
 </body>
 </html>
 </body>
