@@ -158,18 +158,18 @@
             document.getElementById('bloque-opciones').style.display = (tipo === 'seleccion') ? 'flex' : 'none';
         }
 
-        // ==========================================
-        // GENERADOR DE QR DEL DÍA (Versión Enlace Web)
+       // ==========================================
+        // GENERADOR DE QR DEL DÍA (Sincronizado)
         // ==========================================
         function generarQRDelDia() {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fecha-qr-texto').innerText = `📅 Fecha: ${hoy}`;
 
-            // Creamos un enlace directo a tu panel con el parámetro de asistencia de hoy
-            const urlAsistencia = `https://joykerquintero1511-svg.github.io/panel.html?asistencia=${hoy}`;
+            // Texto exacto que el escáner del teléfono reconoce
+            const datosQR = `CELULA_JUEVES_${hoy}`;
             
-            // Generamos el QR que contiene el enlace web exacto
-            const urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(urlAsistencia)}`;
+            // Generamos el código QR con ese texto exacto
+            const urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(datosQR)}`;
             
             const contenedor = document.getElementById('contenedor-imagen-qr');
             contenedor.innerHTML = `<img src="${urlQR}" alt="QR de Asistencia" style="display: block; margin: auto; border-radius: 8px;">`;
