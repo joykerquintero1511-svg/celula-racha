@@ -143,10 +143,16 @@ async function cargarSolicitudesNube() {
                         ${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
                     </span>
                 </div>
-                <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual || 0} semanas</p>
-                ${!user.aprobado 
-                    ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem; margin-top: 8px;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
-                    : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; margin-top: 8px;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
+                <p style="margin: 4px 0;">📱 Teléfono: ${user.telefono}</p>
+                <p style="margin: 4px 0; font-weight: 600; color: var(--accent-success);">⭐ Puntos: ${user.puntos || 0} pts | 🔥 Racha: ${user.racha_actual || 0} sem</p>
+                
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    ${!user.aprobado 
+                        ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem; flex: 1;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
+                        : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; flex: 1;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
+                    
+                    <button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; background: #c0392b; color: white;" onclick="eliminarUsuarioNube(${user.id}, '${user.nombre}')">🗑️ Eliminar</button>
+                </div>
             `;
             contenedor.appendChild(card);
         });
@@ -181,7 +187,6 @@ async function cambiarEstadoUsuario(idUsuario, nuevoEstado) {
 async function eliminarUsuarioNube(idUsuario, nombreUsuario) {
     if (!db) return;
 
-    // Confirmación para evitar accidentes
     let confirmar = confirm(`⚠️ ¿Estás seguro de que deseas eliminar permanentemente a "${nombreUsuario}" de la base de datos?`);
     if (!confirmar) return;
 
@@ -195,7 +200,7 @@ async function eliminarUsuarioNube(idUsuario, nombreUsuario) {
             alert("❌ Error al eliminar usuario: " + error.message);
         } else {
             alert("🗑️ Usuario eliminado correctamente.");
-            cargarSolicitudesNube(); // Recarga la lista al instante
+            cargarSolicitudesNube();
         }
     } catch (err) {
         console.error("Excepción al eliminar:", err);
@@ -240,8 +245,9 @@ async function obtenerAnunciosGlobales() {
     }
     return data;
 }
+
 // ==========================================
-// REGISTRAR ASISTENCIA DESDE EL ESCÁNER QR
+// REGISTRAR ASISTENCIA DESDE EL ESCÁNER QR (Con Bloqueo Diario)
 // ==========================================
 async function registrarAsistenciaQR() {
     let usuario = obtenerUsuarioActual();
@@ -257,6 +263,8 @@ async function registrarAsistenciaQR() {
     }
 
     try {
+        const hoy = new Date().toISOString().split('T')[0];
+
         // 1. Consultamos el estado actual del usuario directamente en Supabase para evitar desfases
         const { data: usuarioActualizado, error: errorConsulta } = await db
             .from('usuarios')
@@ -269,30 +277,39 @@ async function registrarAsistenciaQR() {
             return;
         }
 
-        // 2. Calculamos los nuevos valores sumando a lo que hay en la nube
+        // 2. VERIFICACIÓN: Evitar doble escaneo el mismo día
+        if (usuarioActualizado.ultima_asistencia === hoy) {
+            alert("⚠️ ¡Ya has escaneado tu asistencia el día de hoy! Vuelve en la próxima reunión.");
+            window.location.href = 'panel.html';
+            return;
+        }
+
+        // 3. Calculamos los nuevos valores sumando 1 sola vez
         let nuevaRacha = (usuarioActualizado.racha_actual || 0) + 1;
         let nuevosPuntos = (usuarioActualizado.puntos || 0) + 50; // 50 puntos por asistencia
 
-        // 3. Actualizamos en la base de datos de Supabase
+        // 4. Actualizamos en Supabase guardando la fecha actual en 'ultima_asistencia'
         const { error: errorUpdate } = await db
             .from('usuarios')
             .update({ 
                 racha_actual: nuevaRacha,
-                puntos: nuevosPuntos
+                puntos: nuevosPuntos,
+                ultima_asistencia: hoy
             })
             .eq('id', usuario.id);
 
         if (errorUpdate) {
             alert("❌ Error al registrar asistencia: " + errorUpdate.message);
         } else {
-            // 4. Creamos el objeto fresco con los datos ya sumados
+            // 5. Creamos el objeto fresco con los datos ya sumados
             let usuarioFrescoalStorage = {
                 ...usuarioActualizado,
                 racha_actual: nuevaRacha,
-                puntos: nuevosPuntos
+                puntos: nuevosPuntos,
+                ultima_asistencia: hoy
             };
 
-            // 5. Guardamos en el localStorage para que el panel principal los lea al instante
+            // 6. Guardamos en el localStorage para que el panel principal los lea al instante
             localStorage.setItem('celula_sesion_activa', JSON.stringify(usuarioFrescoalStorage));
 
             alert(`🔥 ¡Asistencia registrada con éxito! Racha actual: ${nuevaRacha} semanas. ¡Ganaste +50 puntos! ⭐`);

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Célula Kids - Panel de Control</title>
+    <link rel="icon" href="logoCKS.png" type="image/png">
+    <link rel="stylesheet" href="mystyle.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --kids-pink: #e81c7f;
+            --kids-blue: #00a8e8;
+            --kids-green: #70cc18;
+            --kids-yellow: #f8c907;
+        }
+        .kid-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .kid-card:hover {
+            border-color: var(--kids-blue);
+        }
+        .badges-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .badge-kids-pts {
+            background: var(--kids-pink);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-kids-racha {
+            background: var(--kids-blue);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .btn-kids-action {
+            padding: 7px 10px;
+            font-size: 0.82rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" style="max-width: 700px;">
+        <header>
+            <div class="logo-container">
+                <img src="logoCKS.png" alt="Logo Célula Kids" class="logo-img" style="max-height: 120px; width: 130px;">
+            </div>
+            <a href="admin.html" class="back-link">⬅️ Volver al Panel de Jóvenes</a>
+            <h1>🧸 Panel de Control - Célula Kids</h1>
+            <p>Administración manual de niños, asistencia (rachas) y puntos</p>
+        </header>
+
+        <!-- Sección de Registro Manual -->
+        <div class="tarea-card" style="margin-bottom: 25px; border-top: 4px solid var(--kids-pink);">
+            <h3>👶 Registrar Nuevo Niño / Niña</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+                <input type="text" id="kids-nombre" placeholder="Nombre completo del niño/a" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                <input type="text" id="kids-representante" placeholder="Nombre del representante o mamá/papá" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                <button class="btn btn-primary" onclick="registrarNinoManual()" style="background: var(--kids-pink); border: none;">Guardar Niño</button>
+            </div>
+        </div>
+
+        <!-- Lista de Niños Registrados -->
+        <h3 style="margin-bottom: 15px;">📋 Listado de Pequeños Campeones</h3>
+        <div id="lista-ninos-container">
+            <p style="text-align: center; color: var(--text-secondary);">Cargando registros de Célula Kids...</p>
+        </div>
+
+        <footer class="app-footer" style="margin-top: 30px;">
+            <p>Desarrollado y Diseñado por <span>Joyker Quintero</span></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarNinosKids();
+        });
+
+        // ==========================================
+        // REGISTRAR NIÑO MANUALMENTE
+        // ==========================================
+        async function registrarNinoManual() {
+            const nombre = document.getElementById('kids-nombre').value.trim();
+            const representante = document.getElementById('kids-representante').value.trim();
+
+            if (!nombre) {
+                alert("⚠️ Por favor ingresa el nombre del niño o niña.");
+                return;
+            }
+
+            if (!db) {
+                alert("❌ Error de conexión con Supabase.");
+                return;
+            }
+
+            try {
+                const { error } = await db.from('ninos_kids').insert([{
+                    nombre: nombre,
+                    representante: representante || 'No especificado',
+                    puntos: 0,
+                    racha_actual: 0,
+                    retos_completados: 0
+                }]);
+
+                if (error) {
+                    alert("❌ Error al registrar: " + error.message);
+                } else {
+                    alert(`✅ ¡${nombre} fue registrado con éxito en Célula Kids!`);
+                    document.getElementById('kids-nombre').value = '';
+                    document.getElementById('kids-representante').value = '';
+                    cargarNinosKids();
+                }
+            } catch (err) {
+                console.error("Excepción:", err);
+                alert("❌ Ocurrió un error inesperado al guardar.");
+            }
+        }
+
+        // ==========================================
+        // CARGAR LISTA DE NIÑOS DESDE SUPABASE
+        // ==========================================
+        async function cargarNinosKids() {
+            const contenedor = document.getElementById('lista-ninos-container');
+            if (!contenedor) return;
+
+            if (!db) {
+                contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error: No se conectó con Supabase.</p>";
+                return;
+            }
+
+            try {
+                const { data, error } = await db
+                    .from('ninos_kids')
+                    .select('*')
+                    .order('id', { ascending: false });
+
+                if (error) {
+                    contenedor.innerHTML = `<p style='text-align: center; color: var(--text-secondary);'>ℹ️ Error al consultar: ${error.message}</p>`;
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay niños registrados todavía. ¡Agrega el primero arriba!</p>";
+                    return;
+                }
+
+                contenedor.innerHTML = "";
+                data.forEach((nino) => {
+                    const card = document.createElement('div');
+                    card.className = "kid-card";
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                            <h4 style="margin: 0; font-size: 1.1rem; color: #fff;">🎈 ${nino.nombre}</h4>
+                            <div class="badges-row">
+                                <span class="badge-kids-racha">🔥 ${nino.racha_actual || 0} sem</span>
+                                <span class="badge-kids-pts">⭐ ${nino.puntos || 0} pts</span>
+                            </div>
+                        </div>
+                        <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-secondary);">👤 Representante: ${nino.representante || 'N/A'}</p>
+                        
+                        <!-- Controles de Asistencia / Racha -->
+                        <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                            <button class="btn-kids-action" style="background: #00a8e8; color: white; flex: 1;" onclick="modificarRachaKids(${nino.id}, ${nino.racha_actual || 0}, 1)">🔥 +1 Racha (Asistió)</button>
+                            <button class="btn-kids-action" style="background: #7f8c8d; color: white;" onclick="reiniciarRachaKids(${nino.id}, '${nino.nombre}')">🔄 0 Racha</button>
+                        </div>
+
+                        <!-- Controles de Puntos / Retos -->
+                        <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                            <button class="btn-kids-action" style="background: #27ae60; color: white; flex: 1;" onclick="modificarPuntosKids(${nino.id}, ${nino.puntos || 0}, 10)">+10 Pts ⭐</button>
+                            <button class="btn-kids-action" style="background: #e67e22; color: white; flex: 1;" onclick="modificarPuntosKids(${nino.id}, ${nino.puntos || 0}, -10)">-10 Pts</button>
+                            <button class="btn-kids-action" style="background: #c0392b; color: white;" onclick="eliminarNinoKids(${nino.id}, '${nino.nombre}')">🗑️</button>
+                        </div>
+                    `;
+                    contenedor.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("Error al cargar niños:", err);
+                contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error de red al cargar los datos.</p>";
+            }
+        }
+
+        // ==========================================
+        // SUMAR RACHA (ASISTENCIA MANUAL)
+        // ==========================================
+        async function modificarRachaKids(idNino, rachaActual, cantidad) {
+            let nuevaRacha = rachaActual + cantidad;
+            if (nuevaRacha < 0) nuevaRacha = 0;
+
+            const { error } = await db
+                .from('ninos_kids')
+                .update({ racha_actual: nuevaRacha })
+                .eq('id', idNino);
+
+            if (error) {
+                alert("❌ Error al actualizar racha: " + error.message);
+            } else {
+                cargarNinosKids();
+            }
+        }
+
+        // ==========================================
+        // REINICIAR RACHA A CERO (Si faltó a la célula)
+        // ==========================================
+        async function reiniciarRachaKids(idNino, nombreNino) {
+            if (!confirm(`¿Reiniciar la racha de "${nombreNino}" a 0 semanas?`)) return;
+
+            const { error } = await db
+                .from('ninos_kids')
+                .update({ racha_actual: 0 })
+                .eq('id', idNino);
+
+            if (error) {
+                alert("❌ Error al reiniciar racha: " + error.message);
+            } else {
+                cargarNinosKids();
+            }
+        }
+
+        // ==========================================
+        // SUMAR / RESTAR PUNTOS A UN NIÑO
+        // ==========================================
+        async function modificarPuntosKids(idNino, puntosActuales, cantidad) {
+            let nuevosPuntos = puntosActuales + cantidad;
+            if (nuevosPuntos < 0) nuevosPuntos = 0;
+
+            const { error } = await db
+                .from('ninos_kids')
+                .update({ puntos: nuevosPuntos })
+                .eq('id', idNino);
+
+            if (error) {
+                alert("❌ Error al actualizar puntos: " + error.message);
+            } else {
+                cargarNinosKids();
+            }
+        }
+
+        // ==========================================
+        // ELIMINAR REGISTRO DE UN NIÑO
+        // ==========================================
+        async function eliminarNinoKids(idNino, nombreNino) {
+            if (!confirm(`⚠️ ¿Deseas eliminar a "${nombreNino}" del registro de Célula Kids?`)) return;
+
+            const { error } = await db
+                .from('ninos_kids')
+                .delete()
+                .eq('id', idNino);
+
+            if (error) {
+                alert("❌ Error al eliminar: " + error.message);
+            } else {
+                alert("🗑️ Niño eliminado correctamente.");
+                cargarNinosKids();
+            }
+        }
+    </script>
+</body>
+</html>
