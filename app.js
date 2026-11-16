@@ -101,9 +101,6 @@ async function iniciarSesion(telefono) {
     }
 }
 
-// ==========================================
-// FUNCIONES DEL PANEL DE ADMINISTRADOR
-// ==========================================
 async function cargarSolicitudesNube() {
     const contenedor = document.getElementById('lista-solicitudes');
     if (!contenedor) return;
@@ -119,7 +116,7 @@ async function cargarSolicitudesNube() {
         const { data, error } = await db
             .from('usuarios')
             .select('*')
-            .order('id', { ascending: false });
+            .order('puntos', { ascending: false });
 
         if (error) {
             contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error Supabase: ${error.message}</p>`;
@@ -143,8 +140,8 @@ async function cargarSolicitudesNube() {
                         ${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
                     </span>
                 </div>
-                <p style="margin: 4px 0;">📱 Teléfono: ${user.telefono}</p>
-                <p style="margin: 4px 0; font-weight: 600; color: var(--accent-success);">⭐ Puntos: ${user.puntos || 0} pts | 🔥 Racha: ${user.racha_actual || 0} sem</p>
+                <p style="margin: 4px 0;">📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual || 0} semanas</p>
+                <p style="margin: 6px 0; font-size: 1rem; font-weight: bold; color: #f8c907;">⭐ Puntos acumulados: ${user.puntos || 0} pts</p>
                 
                 <div style="display: flex; gap: 8px; margin-top: 10px;">
                     ${!user.aprobado 

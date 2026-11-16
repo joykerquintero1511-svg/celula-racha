@@ -181,63 +181,6 @@
             contenedor.innerHTML = `<img src="${urlQR}" alt="QR de Asistencia" style="display: block; margin: auto; border-radius: 8px;">`;
         }
 
-        // ==========================================
-        // GESTIÓN DE JÓVENES (Aprobar / Desactivar / Eliminar)
-        // ==========================================
-        async function cargarSolicitudesNube() {
-            const contenedor = document.getElementById('lista-solicitudes');
-            if (!contenedor) return;
-
-            if (!db) {
-                contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error: Falta inicializar Supabase.</p>";
-                return;
-            }
-
-            contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>Consultando base de datos...</p>";
-
-            try {
-                const { data, error } = await db
-                    .from('usuarios')
-                    .select('*')
-                    .order('id', { ascending: false });
-
-                if (error) {
-                    contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error Supabase: ${error.message}</p>`;
-                    return;
-                }
-
-                if (!data || data.length === 0) {
-                    contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay jóvenes registrados todavía.</p>";
-                    return;
-                }
-
-                contenedor.innerHTML = "";
-                data.forEach((user) => {
-                    const card = document.createElement('div');
-                    card.className = "tarea-card";
-                    card.innerHTML = `
-                        <div class="tarea-header">
-                            <h3>${user.nombre}</h3>
-                            <span class="badge ${user.aprobado ? 'memorizar' : 'lectura'}">
-                                ${user.aprobado ? '✅ Aprobado' : '⏳ Pendiente'}
-                            </span>
-                        </div>
-                        <p>📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual || 0} semanas</p>
-                        
-                        <div style="display: flex; gap: 8px; margin-top: 10px;">
-                            ${!user.aprobado 
-                                ? `<button class="btn btn-primary" style="padding: 8px; font-size: 0.85rem; flex: 1;" onclick="cambiarEstadoUsuario(${user.id}, true)">Aprobar Acceso</button>` 
-                                : `<button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; flex: 1;" onclick="cambiarEstadoUsuario(${user.id}, false)">Desactivar</button>`}
-                            
-                            <button class="btn btn-secondary" style="padding: 8px; font-size: 0.85rem; background: #c0392b; color: white;" onclick="eliminarUsuarioNube(${user.id}, '${user.nombre}')">🗑️ Eliminar</button>
-                        </div>
-                    `;
-                    contenedor.appendChild(card);
-                });
-            } catch (err) {
-                contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error de red: ${err.message}</p>`;
-            }
-        }
 
         async function eliminarUsuarioNube(idUsuario, nombreUsuario) {
             if (!db) return;
