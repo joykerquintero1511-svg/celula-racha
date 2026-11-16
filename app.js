@@ -141,7 +141,7 @@ async function cargarSolicitudesNube() {
                     </span>
                 </div>
                 <p style="margin: 4px 0;">📱 Teléfono: ${user.telefono} | 🔥 Racha: ${user.racha_actual || 0} semanas</p>
-                <p style="margin: 6px 0; font-size: 1rem; font-weight: bold; color: #f8c907;">⭐ Puntos acumulados: ${user.puntos || 0} pts</p>
+                <p style="margin: 6px 0; font-size: 0.75rem; font-weight: bold; color: #f8c008;">⭐ Puntos acumulados: ${user.puntos || 0} pts</p>
                 
                 <div style="display: flex; gap: 8px; margin-top: 10px;">
                     ${!user.aprobado 
