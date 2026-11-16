@@ -262,7 +262,7 @@ async function registrarAsistenciaQR() {
     try {
         const hoy = new Date().toISOString().split('T')[0];
 
-        // 1. Consultamos el estado actual del usuario directamente en Supabase para evitar desfases
+        // Consultamos el estado actual del usuario directamente en Supabase para evitar desfases
         const { data: usuarioActualizado, error: errorConsulta } = await db
             .from('usuarios')
             .select('*')

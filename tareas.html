@@ -44,11 +44,31 @@
     </div> <!-- Cierre del container principal -->
 
     <script src="app.js"></script>
-    <script>
+   <script>
+        let idsTareasCompletadasNube = [];
+
         document.addEventListener('DOMContentLoaded', async () => {
+            await cargarTareasCompletadasUsuario();
             await renderizarAnuncios();
             await renderizarTareas();
         });
+
+        async function cargarTareasCompletadasUsuario() {
+            let usuario = obtenerUsuarioActual();
+            if (!usuario || !db) return;
+
+            // Consultamos en Supabase qué tareas ya hizo este usuario
+            const { data, error } = await db
+                .from('tareas_completadas')
+                .select('tarea_id')
+                .eq('usuario_id', usuario.id);
+
+            if (!error && data) {
+                idsTareasCompletadasNube = data.map(item => item.tarea_id);
+            } else {
+                idsTareasCompletadasNube = usuario.tareasCompletadas || [];
+            }
+        }
 
         async function renderizarAnuncios() {
             let anuncios = await obtenerAnunciosGlobales();
@@ -78,7 +98,7 @@
             let cont = document.getElementById('contenedor-tareas');
             cont.innerHTML = "";
 
-            if(!usuario) {
+            if (!usuario) {
                 window.location.href = 'index.html';
                 return;
             }
@@ -90,10 +110,8 @@
                 return;
             }
 
-            let completadas = usuario.tareasCompletadas || [];
-
             tareas.forEach(t => {
-                let yaEstaHecha = completadas.includes(t.id);
+                let yaEstaHecha = idsTareasCompletadasNube.includes(t.id);
                 let card = document.createElement('div');
                 card.className = "tarea-card";
                 
@@ -139,6 +157,8 @@
             let tarea = tareas.find(t => t.id === idTarea);
             let usuario = obtenerUsuarioActual();
 
+            if (!tarea || !usuario) return;
+
             let respuestaValida = false;
             let respuestaCorrectaBD = tarea.respuesta_correcta || tarea.respuestaCorrecta;
 
@@ -164,23 +184,52 @@
             }
 
             if (respuestaValida) {
-                alert(`🎉 ¡Excelente! Respuesta correcta. Ganaste +${tarea.puntos || 20} puntos ⭐.`);
-                
-                if (!usuario.tareasCompletadas) usuario.tareasCompletadas = [];
-                usuario.tareasCompletadas.push(tarea.id);
-                usuario.puntos = (usuario.puntos || 0) + (tarea.puntos || 20);
+                const puntosGanados = Number(tarea.puntos) || 20;
 
-                localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
-
-                // Actualizar en la base de datos de Supabase si el cliente está activo
                 if (db) {
-                    await db.from('usuarios').update({
-                        puntos: usuario.puntos,
-                        tareasCompletadas: usuario.tareasCompletadas
-                    }).eq('id', usuario.id);
+                    // 1. Traemos los puntos reales desde Supabase para no pisar valores anteriores
+                    const { data: userBD, error: errFetch } = await db
+                        .from('usuarios')
+                        .select('puntos')
+                        .eq('id', usuario.id)
+                        .single();
+
+                    if (errFetch) {
+                        alert("❌ Error al conectar con la base de datos: " + errFetch.message);
+                        return;
+                    }
+
+                    const nuevosPuntosTotales = (userBD.puntos || 0) + puntosGanados;
+
+                    // 2. Actualizamos SOLO la columna 'puntos' en la tabla 'usuarios'
+                    const { error: errUpdate } = await db
+                        .from('usuarios')
+                        .update({ puntos: nuevosPuntosTotales })
+                        .eq('id', usuario.id);
+
+                    if (errUpdate) {
+                        alert("❌ Error al guardar puntos en la nube: " + errUpdate.message);
+                        return;
+                    }
+
+                    // 3. Guardamos el registro en la tabla 'tareas_completadas'
+                    await db.from('tareas_completadas').insert([{
+                        usuario_id: usuario.id,
+                        tarea_id: tarea.id
+                    }]);
+
+                    usuario.puntos = nuevosPuntosTotales;
+                } else {
+                    usuario.puntos = (usuario.puntos || 0) + puntosGanados;
                 }
 
-                renderizarTareas();
+                // Actualizamos sesión local
+                idsTareasCompletadasNube.push(tarea.id);
+                usuario.tareasCompletadas = idsTareasCompletadasNube;
+                localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
+
+                alert(`🎉 ¡Excelente! Respuesta correcta. Ganaste +${puntosGanados} puntos ⭐.`);
+                await renderizarTareas();
             }
         }
     </script>
