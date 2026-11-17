@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda de Premios - Célula Juvenil</title>
+    <link rel="icon" href="logoCJ.png" type="image/png">
+    <link rel="stylesheet" href="mystyle.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="container" style="max-width: 500px;">
+        <header>
+            <div class="logo-container">
+                <img src="logoCJ.png" alt="Logo Célula" class="logo-img">
+            </div>
+            <a href="panel.html" class="back-link">⬅️ Volver a mi Racha</a>
+            <h1>🛒 Tienda de Premios</h1>
+            <p>Canjea tus puntos acumulados por recompensas reales</p>
+        </header>
+
+        <!-- Tarjeta de Saldo Actual del Estudiante -->
+        <div class="racha-card" style="justify-content: space-between; padding: 16px 20px; margin-bottom: 20px; border: 2px solid #f8c907;">
+            <div>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">Tu Saldo Disponible</p>
+                <h2 id="saldo-usuario" style="margin: 4px 0 0 0; color: #f8c907; font-size: 1.8rem;">0 pts</h2>
+            </div>
+            <div style="font-size: 2.5rem;">⭐</div>
+        </div>
+
+        <!-- Catálogo de Premios -->
+        <h3 style="font-size: 1.1rem; margin-bottom: 12px;">🎁 Recompensas Disponibles</h3>
+        <div id="contenedor-premios" style="display: flex; flex-direction: column; gap: 14px;">
+            <p style="text-align: center; color: var(--text-secondary);">Cargando catálogo de premios...</p>
+        </div>
+
+        <!-- Historial de Canjes del Usuario -->
+        <div style="margin-top: 28px;">
+            <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--text-secondary);">🧾 Mis Premios Canjeados</h3>
+            <div id="contenedor-mis-canjes" style="display: flex; flex-direction: column; gap: 8px;">
+                <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">Aún no has canjeado premios.</p>
+            </div>
+        </div>
+
+        <footer class="app-footer" style="margin-top: 30px;">
+            <p>Desarrollado y Diseñado por <span>Joyker Quintero</span></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        let puntosRealesNube = 0;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const usuario = obtenerUsuarioActual();
+            if (!usuario) {
+                window.location.href = 'index.html';
+                return;
+            }
+            await sincronizarSaldoNube(usuario.id);
+            await cargarPremios();
+            await cargarHistorialCanjes(usuario.id);
+        });
+
+        // 1. Traer saldo exacto desde Supabase para evitar trampas
+        async function sincronizarSaldoNube(usuarioId) {
+            if (!db) return;
+            const { data, error } = await db
+                .from('usuarios')
+                .select('*')
+                .eq('id', usuarioId)
+                .single();
+
+            if (!error && data) {
+                puntosRealesNube = data.puntos || 0;
+                document.getElementById('saldo-usuario').innerText = `${puntosRealesNube} pts`;
+                localStorage.setItem('celula_sesion_activa', JSON.stringify(data));
+            }
+        }
+
+        // 2. Renderizar catálogo de premios
+        async function cargarPremios() {
+            const cont = document.getElementById('contenedor-premios');
+            if (!db) return;
+
+            const { data: premios, error } = await db
+                .from('premios')
+                .select('*')
+                .eq('disponible', true)
+                .order('costo_puntos', { ascending: true });
+
+            if (error || !premios || premios.length === 0) {
+                cont.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay premios disponibles en este momento.</p>";
+                return;
+            }
+
+            cont.innerHTML = "";
+            premios.forEach(premio => {
+                const alcanza = puntosRealesNube >= premio.costo_puntos;
+                const card = document.createElement('div');
+                card.className = "tarea-card";
+                card.innerHTML = `
+                    <div class="tarea-header">
+                        <h3 style="margin: 0;">${premio.icono || '🎁'} ${premio.nombre}</h3>
+                        <span class="puntos-recompensa" style="background: rgba(248, 201, 7, 0.15); color: #f8c907; padding: 4px 10px; border-radius: 12px; font-weight: bold;">
+                            ${premio.costo_puntos} pts
+                        </span>
+                    </div>
+                    <p style="margin: 8px 0 14px 0; font-size: 0.9rem; color: var(--text-secondary);">${premio.descripcion || ''}</p>
+                    <button 
+                        class="btn ${alcanza ? 'btn-primary' : 'btn-secondary'}" 
+                        style="${alcanza ? 'background: #27ae60;' : 'opacity: 0.5; cursor: not-allowed;'}"
+                        ${!alcanza ? 'disabled' : ''}
+                        onclick="canjearPremio(${premio.id}, '${premio.nombre.replace(/'/g, "\\'")}', ${premio.costo_puntos})">
+                        ${alcanza ? '🛒 Canjear Premio' : `🔒 Te faltan ${premio.costo_puntos - puntosRealesNube} pts`}
+                    </button>
+                `;
+                cont.appendChild(card);
+            });
+        }
+
+        // 3. Procesar el canje y descontar/vaciar puntos
+        async function canjearPremio(premioId, premioNombre, costoPuntos) {
+            const usuario = obtenerUsuarioActual();
+            if (!usuario || !db) return;
+
+            if (puntosRealesNube < costoPuntos) {
+                alert("❌ No tienes puntos suficientes para este premio.");
+                return;
+            }
+
+            const confirmar = confirm(`🛒 ¿Confirmas que deseas canjear "${premioNombre}" por ${costoPuntos} puntos?`);
+            if (!confirmar) return;
+
+            // Calculamos el nuevo saldo restando el costo (si quieres que SIEMPRE quede en 0 al canjear, cambia la línea de abajo por: const nuevoSaldo = 0;)
+            const nuevoSaldo = puntosRealesNube - costoPuntos;
+
+            // A. Actualizamos los puntos del usuario en Supabase
+            const { error: errorPuntos } = await db
+                .from('usuarios')
+                .update({ puntos: nuevoSaldo })
+                .eq('id', usuario.id);
+
+            if (errorPuntos) {
+                alert("❌ Error al procesar el canje: " + errorPuntos.message);
+                return;
+            }
+
+            // B. Guardamos el comprobante del canje para el líder
+            await db.from('canjes').insert([{
+                usuario_id: usuario.id,
+                usuario_nombre: usuario.nombre,
+                premio_nombre: premioNombre,
+                puntos_gastados: costoPuntos
+            }]);
+
+            alert(`🎉 ¡Canje exitoso! Has reclamado "${premioNombre}". Muestra esta pantalla o avisa a tu líder en la próxima célula para recibir tu regalo.`);
+
+            // C. Refrescamos la interfaz al instante
+            await sincronizarSaldoNube(usuario.id);
+            await cargarPremios();
+            await cargarHistorialCanjes(usuario.id);
+        }
+
+        // 4. Mostrar historial de canjes del joven
+        async function cargarHistorialCanjes(usuarioId) {
+            const cont = document.getElementById('contenedor-mis-canjes');
+            if (!db) return;
+
+            const { data, error } = await db
+                .from('canjes')
+                .select('*')
+                .eq('usuario_id', usuarioId)
+                .order('id', { ascending: false });
+
+            if (error || !data || data.length === 0) return;
+
+            cont.innerHTML = "";
+            data.forEach(c => {
+                const fechaFormat = new Date(c.fecha).toLocaleDateString('es-VE');
+                const item = document.createElement('div');
+                item.className = "tarea-card";
+                item.style.padding = "10px 14px";
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size: 0.9rem;">${c.premio_nombre}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">📅 ${fechaFormat} • -${c.puntos_gastados} pts</div>
+                        </div>
+                        <span class="badge ${c.entregado ? 'memorizar' : 'lectura'}" style="font-size: 0.75rem;">
+                            ${c.entregado ? '✅ Entregado' : '⏳ Por entregar'}
+                        </span>
+                    </div>
+                `;
+                cont.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>

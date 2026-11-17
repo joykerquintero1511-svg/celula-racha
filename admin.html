@@ -31,12 +31,12 @@
 
         <!-- Contenido Completo del Panel -->
         <div id="admin-panel" style="display: none;">
-              <!-- Acceso al Panel de Célula Kids -->
-<div style="margin-bottom: 20px; text-align: center;">
-    <a href="kids.html" class="btn btn-secondary" style="background: linear-gradient(135deg, #8e44ad, #3498db,#eef604 ); color: white; display: block; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: 600;">
-        🧸Célula Kids
-    </a> 
-</div>
+            <!-- Acceso al Panel de Célula Kids -->
+            <div style="margin-bottom: 20px; text-align: center;">
+                <a href="kids.html" class="btn btn-secondary" style="background: linear-gradient(135deg, #8e44ad, #3498db, #eef604); color: white; display: block; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: 600;">
+                    🧸 Célula Kids
+                </a> 
+            </div>
             
             <!-- Menú de Pestañas -->
             <div class="tab-menu" style="display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -44,6 +44,7 @@
                 <button class="tab-btn" id="tab-tareas" onclick="cambiarTabAdmin('tareas')" style="flex: 1; font-size: 0.85rem;">📖 Tareas</button>
                 <button class="tab-btn" id="tab-anuncios" onclick="cambiarTabAdmin('anuncios')" style="flex: 1; font-size: 0.85rem;">📢 Anuncios</button>
                 <button class="tab-btn" id="tab-qr" onclick="cambiarTabAdmin('qr')" style="flex: 1; font-size: 0.85rem;">📷 QR del Día</button>
+                <button class="tab-btn" id="tab-premios" onclick="cambiarTabAdmin('premios')" style="flex: 1; font-size: 0.85rem;">🎁 Premios</button>
             </div>
 
             <!-- ========================================== -->
@@ -72,7 +73,7 @@
                     </select>
 
                     <div id="bloque-opciones" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-                        <small style="color: var(--text-secondary);">Opciones de respuesta (escribe las 3 opciones y indica cuál es la correcta):</small>
+                        <small style="color: var(--text-secondary);">Opciones de respuesta (escribe las 3 opciones e indica cuál es la correcta):</small>
                         <input type="text" id="op-1" placeholder="Opción 1" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
                         <input type="text" id="op-2" placeholder="Opción 2" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
                         <input type="text" id="op-3" placeholder="Opción 3" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
@@ -112,7 +113,6 @@
                 
                 <div class="tarea-card" style="display: inline-block; padding: 20px; background: white; border-radius: 12px; margin-bottom: 15px;">
                     <div id="contenedor-imagen-qr">
-                        <!-- El QR se genera automáticamente aquí -->
                         <p style="color: #333;">Generando QR...</p>
                     </div>
                 </div>
@@ -123,13 +123,50 @@
                 </div>
             </div>
 
+            <!-- ========================================== -->
+            <!-- SECCIÓN 5: PREMIOS Y CANJES                -->
+            <!-- ========================================== -->
+            <div id="sec-premios" class="admin-seccion" style="display: none;">
+                <!-- Formulario para Crear o Editar Premio -->
+                <div class="tarea-card" style="margin-bottom: 20px; border-top: 4px solid #f8c907;">
+                    <h3 id="titulo-form-premio">➕ Agregar Nuevo Premio</h3>
+                    <input type="hidden" id="premio-edit-id" value="">
+
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="premio-icono" value="🎁" placeholder="Emoji" style="width: 65px; text-align: center; font-size: 1.2rem; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                            <input type="text" id="premio-nombre" placeholder="Nombre del premio (Ej: Chocolate)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        </div>
+                        <input type="text" id="premio-desc" placeholder="Descripción breve del premio" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <input type="number" id="premio-costo" placeholder="Costo en puntos (Ej: 150)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-guardar-premio" class="btn btn-primary" style="flex: 1; background: #f39c12; color: #111; font-weight: bold;" onclick="guardarPremioAdmin()">Guardar Premio en Tienda</button>
+                            <button id="btn-cancelar-premio" class="btn btn-secondary" style="display: none;" onclick="cancelarEdicionPremio()">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Catálogo Actual (Para Editar o Eliminar) -->
+                <h3 style="margin-bottom: 12px;">🛍️ Catálogo Activo</h3>
+                <div id="admin-lista-premios" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+                    <p style="text-align: center; color: var(--text-secondary);">Cargando premios...</p>
+                </div>
+
+                <!-- Solicitudes de Canje de los Jóvenes -->
+                <h3 style="margin-bottom: 12px;">🧾 Canjes Realizados por Jóvenes</h3>
+                <div id="admin-lista-canjes" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="text-align: center; color: var(--text-secondary);">Cargando canjes...</p>
+                </div>
+            </div>
+
         </div>
 
         <!-- Firma Institucional -->
         <footer class="app-footer">
             <p>Desarrollado y Diseñado por <span>Joyker Quintero</span></p>
         </footer>
-    </div> <!-- Cierre del container principal -->
+    </div>
 
     <script src="app.js"></script>
     <script>
@@ -150,13 +187,17 @@
             document.querySelectorAll('.admin-seccion').forEach(s => s.style.display = 'none');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
-            document.getElementById('sec-' + seccion).style.display = 'block';
-            document.getElementById('tab-' + seccion).classList.add('active');
+            const secActiva = document.getElementById('sec-' + seccion);
+            const tabActivo = document.getElementById('tab-' + seccion);
+
+            if (secActiva) secActiva.style.display = 'block';
+            if (tabActivo) tabActivo.classList.add('active');
 
             if (seccion === 'jovenes') cargarSolicitudesNube();
             if (seccion === 'tareas') cargarTareasAdmin();
             if (seccion === 'anuncios') cargarAnunciosAdmin();
             if (seccion === 'qr') generarQRDelDia();
+            if (seccion === 'premios') cargarGestionPremiosAdmin();
         }
 
         function toggleOpcionesTarea() {
@@ -164,41 +205,18 @@
             document.getElementById('bloque-opciones').style.display = (tipo === 'seleccion') ? 'flex' : 'none';
         }
 
-       // ==========================================
+        // ==========================================
         // GENERADOR DE QR DEL DÍA (Sincronizado)
         // ==========================================
         function generarQRDelDia() {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fecha-qr-texto').innerText = `📅 Fecha: ${hoy}`;
 
-            // Texto exacto que el escáner del teléfono reconoce
             const datosQR = `CELULA_JUEVES_${hoy}`;
-            
-            // Generamos el código QR con ese texto exacto
             const urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(datosQR)}`;
             
             const contenedor = document.getElementById('contenedor-imagen-qr');
             contenedor.innerHTML = `<img src="${urlQR}" alt="QR de Asistencia" style="display: block; margin: auto; border-radius: 8px;">`;
-        }
-
-
-        async function eliminarUsuarioNube(idUsuario, nombreUsuario) {
-            if (!db) return;
-            let confirmar = confirm(`⚠️ ¿Estás seguro de que deseas eliminar permanentemente a "${nombreUsuario}" de la base de datos?`);
-            if (!confirmar) return;
-
-            try {
-                const { error } = await db.from('usuarios').delete().eq('id', idUsuario);
-                if (error) {
-                    alert("❌ Error al eliminar usuario: " + error.message);
-                } else {
-                    alert("🗑️ Usuario eliminado correctamente.");
-                    cargarSolicitudesNube();
-                }
-            } catch (err) {
-                console.error("Excepción al eliminar:", err);
-                alert("❌ Error de conexión al intentar eliminar.");
-            }
         }
 
         // ==========================================

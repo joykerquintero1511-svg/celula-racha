@@ -317,3 +317,169 @@ async function registrarAsistenciaQR() {
         alert("❌ Ocurrió un error inesperado al procesar la asistencia.");
     }
 }
+
+// ==========================================
+// GESTIÓN DE TIENDA Y CANJES (PANEL ADMIN)
+// ==========================================
+async function cargarGestionPremiosAdmin() {
+    const contPremios = document.getElementById('admin-lista-premios');
+    const contCanjes = document.getElementById('admin-lista-canjes');
+    if (!contPremios || !db) return;
+
+    const { data: premios, error } = await db
+        .from('premios')
+        .select('*')
+        .order('costo_puntos', { ascending: true });
+
+    if (error) {
+        contPremios.innerHTML = `<p style="color: #ff6b6b;">❌ Error: ${error.message}</p>`;
+    } else if (!premios || premios.length === 0) {
+        contPremios.innerHTML = "<p style='color: var(--text-secondary); text-align: center;'>No hay premios creados todavía.</p>";
+    } else {
+        contPremios.innerHTML = "";
+        premios.forEach(p => {
+            const card = document.createElement('div');
+            card.className = "tarea-card";
+            card.innerHTML = `
+                <div class="tarea-header">
+                    <h4 style="margin: 0;">${p.icono || '🎁'} ${p.nombre}</h4>
+                    <span class="badge memorizar" style="background: rgba(248, 201, 7, 0.2); color: #f8c907;">${p.costo_puntos} pts</span>
+                </div>
+                <p style="margin: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">${p.descripcion || 'Sin descripción'}</p>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.82rem; flex: 1;" 
+                        onclick="prepararEdicionPremio(${p.id}, '${p.nombre.replace(/'/g, "\\'")}', '${(p.descripcion || '').replace(/'/g, "\\'")}', ${p.costo_puntos}, '${p.icono || '🎁'}')">
+                        ✏️ Editar
+                    </button>
+                    <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.82rem; background: #c0392b; color: white;" 
+                        onclick="eliminarPremioAdmin(${p.id}, '${p.nombre.replace(/'/g, "\\'")}')">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            `;
+            contPremios.appendChild(card);
+        });
+    }
+
+    if (!contCanjes) return;
+    const { data: canjes } = await db
+        .from('canjes')
+        .select('*')
+        .order('id', { ascending: false });
+
+    if (!canjes || canjes.length === 0) {
+        contCanjes.innerHTML = "<p style='color: var(--text-secondary); text-align: center; font-size: 0.85rem;'>Nadie ha canjeado premios aún.</p>";
+        return;
+    }
+
+    contCanjes.innerHTML = "";
+    canjes.forEach(c => {
+        const fechaFormat = new Date(c.fecha).toLocaleDateString('es-VE');
+        const card = document.createElement('div');
+        card.className = "tarea-card";
+        card.style.borderLeft = c.entregado ? "4px solid #27ae60" : "4px solid #f39c12";
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <div>
+                    <strong style="font-size: 0.95rem;">👤 ${c.usuario_nombre}</strong>
+                    <div style="font-size: 0.85rem; color: #f8c907; margin-top: 2px;">🎁 ${c.premio_nombre} (${c.puntos_gastados} pts)</div>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem;">📅 ${fechaFormat}</small>
+                </div>
+                ${!c.entregado 
+                    ? `<button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;" onclick="marcarCanjeEntregado(${c.id})">✅ Entregar</button>`
+                    : `<span class="badge memorizar" style="font-size: 0.75rem;">Entregado</span>`}
+            </div>
+        `;
+        contCanjes.appendChild(card);
+    });
+}
+
+async function guardarPremioAdmin() {
+    if (!db) return;
+    const idEditando = document.getElementById('premio-edit-id').value;
+    const icono = document.getElementById('premio-icono').value.trim() || '🎁';
+    const nombre = document.getElementById('premio-nombre').value.trim();
+    const descripcion = document.getElementById('premio-desc').value.trim();
+    const costo = parseInt(document.getElementById('premio-costo').value);
+
+    if (!nombre || isNaN(costo) || costo <= 0) {
+        alert("⚠️ Ingresa un nombre válido y un costo mayor a 0 puntos.");
+        return;
+    }
+
+    if (idEditando) {
+        const { error } = await db
+            .from('premios')
+            .update({ icono, nombre, descripcion, costo_puntos: costo })
+            .eq('id', idEditando);
+
+        if (error) {
+            alert("❌ Error al actualizar premio: " + error.message);
+            return;
+        }
+        alert("✅ Premio actualizado correctamente.");
+    } else {
+        const { error } = await db
+            .from('premios')
+            .insert([{ icono, nombre, descripcion, costo_puntos: costo, disponible: true }]);
+
+        if (error) {
+            alert("❌ Error al crear premio: " + error.message);
+            return;
+        }
+        alert("✅ Nuevo premio agregado a la tienda.");
+    }
+
+    cancelarEdicionPremio();
+    cargarGestionPremiosAdmin();
+}
+
+function prepararEdicionPremio(id, nombre, descripcion, costo, icono) {
+    document.getElementById('premio-edit-id').value = id;
+    document.getElementById('premio-icono').value = icono;
+    document.getElementById('premio-nombre').value = nombre;
+    document.getElementById('premio-desc').value = descripcion;
+    document.getElementById('premio-costo').value = costo;
+
+    document.getElementById('titulo-form-premio').innerText = "✏️ Editando Premio";
+    document.getElementById('btn-guardar-premio').innerText = "💾 Guardar Cambios";
+    document.getElementById('btn-cancelar-premio').style.display = "inline-block";
+    document.getElementById('sec-premios').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelarEdicionPremio() {
+    document.getElementById('premio-edit-id').value = "";
+    document.getElementById('premio-icono').value = "🎁";
+    document.getElementById('premio-nombre').value = "";
+    document.getElementById('premio-desc').value = "";
+    document.getElementById('premio-costo').value = "";
+
+    document.getElementById('titulo-form-premio').innerText = "➕ Agregar Nuevo Premio";
+    document.getElementById('btn-guardar-premio').innerText = "Guardar Premio en Tienda";
+    document.getElementById('btn-cancelar-premio').style.display = "none";
+}
+
+async function eliminarPremioAdmin(id, nombre) {
+    if (!db) return;
+    if (!confirm(`⚠️ ¿Seguro que deseas eliminar "${nombre}" de la tienda?`)) return;
+
+    const { error } = await db.from('premios').delete().eq('id', id);
+    if (error) {
+        alert("❌ Error al eliminar: " + error.message);
+    } else {
+        alert("🗑️ Premio eliminado.");
+        cargarGestionPremiosAdmin();
+    }
+}
+
+async function marcarCanjeEntregado(canjeId) {
+    if (!db) return;
+    const { error } = await db
+        .from('canjes')
+        .update({ entregado: true })
+        .eq('id', canjeId);
+
+    if (!error) {
+        cargarGestionPremiosAdmin();
+    }
+}
