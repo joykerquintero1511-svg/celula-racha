@@ -61,27 +61,98 @@
     <div class="container" style="max-width: 700px;">
         <header>
             <div class="logo-container">
-                <img src="logoCKS.png" alt="Logo Célula Kids" class="logo-img" style="max-height: 120px; width: 130px;">
+                <img src="logoCKS.png" alt="Logo Célula Kids" class="logo-img" style="max-height: 90px; width: auto;">
             </div>
             <a href="admin.html" class="back-link">⬅️ Volver al Panel de Jóvenes</a>
             <h1>🧸 Panel de Control - Célula Kids</h1>
-            <p>Administración manual de niños, asistencia (rachas) y puntos</p>
+            <p>Administración manual de niños, asistencia, puntos y tienda</p>
         </header>
 
-        <!-- Sección de Registro Manual -->
-        <div class="tarea-card" style="margin-bottom: 25px; border-top: 4px solid var(--kids-pink);">
-            <h3>👶 Registrar Nuevo Niño / Niña</h3>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
-                <input type="text" id="kids-nombre" placeholder="Nombre completo del niño/a" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
-                <input type="text" id="kids-representante" placeholder="Nombre del representante o mamá/papá" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
-                <button class="btn btn-primary" onclick="registrarNinoManual()" style="background: var(--kids-pink); border: none;">Guardar Niño</button>
+        <!-- Pestañas de Navegación Kids -->
+        <div class="tab-menu" style="display: flex; gap: 8px; margin-bottom: 20px;">
+            <button class="tab-btn active" id="tab-kids-ninos" onclick="cambiarTabKids('ninos')" style="flex: 1;">👶 Niños y Puntos</button>
+            <button class="tab-btn" id="tab-kids-tienda" onclick="cambiarTabKids('tienda')" style="flex: 1;">🛒 Tienda Kids</button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: NIÑOS, RACHA Y PUNTOS           -->
+        <!-- ========================================== -->
+        <div id="sec-kids-ninos" class="kids-seccion">
+            <div class="tarea-card" style="margin-bottom: 25px; border-top: 4px solid var(--kids-pink);">
+                <h3>👶 Registrar Nuevo Niño / Niña</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+                    <input type="text" id="kids-nombre" placeholder="Nombre completo del niño/a" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                    <input type="text" id="kids-representante" placeholder="Nombre del representante o mamá/papá" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                    <button class="btn btn-primary" onclick="registrarNinoManual()" style="background: var(--kids-pink); border: none;">Guardar Niño en el Sistema</button>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 15px;">📋 Listado de Pequeños Campeones</h3>
+            <div id="lista-ninos-container">
+                <p style="text-align: center; color: var(--text-secondary);">Cargando registros de Célula Kids...</p>
             </div>
         </div>
 
-        <!-- Lista de Niños Registrados -->
-        <h3 style="margin-bottom: 15px;">📋 Listado de Pequeños Campeones</h3>
-        <div id="lista-ninos-container">
-            <p style="text-align: center; color: var(--text-secondary);">Cargando registros de Célula Kids...</p>
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: TIENDA KIDS (SOLO ADMIN)        -->
+        <!-- ========================================== -->
+        <div id="sec-kids-tienda" class="kids-seccion" style="display: none;">
+            
+            <!-- Módulo Principal: Realizar Canje a un Niño -->
+            <div class="tarea-card" style="margin-bottom: 22px; border-top: 4px solid var(--kids-green);">
+                <h3>🎁 Canjear Premio para un Niño</h3>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 4px 0 12px 0;">
+                    Selecciona el regalo y el niño que lo reclama. Al confirmar, <b>se vaciarán todos sus puntos a 0</b>.
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <label style="font-size: 0.85rem; color: var(--kids-yellow); font-weight: bold;">1. Selecciona el Premio:</label>
+                    <select id="select-premio-kids" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <option value="">Cargando premios...</option>
+                    </select>
+
+                    <label style="font-size: 0.85rem; color: var(--kids-blue); font-weight: bold;">2. Selecciona el Niño / Niña:</label>
+                    <select id="select-nino-canje" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <option value="">Cargando niños...</option>
+                    </select>
+
+                    <button class="btn btn-primary" onclick="procesarCanjeKids()" style="background: var(--kids-green); color: #111; font-weight: bold; margin-top: 4px;">
+                        🛒 Canjear Premio y Vaciar Puntos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulario para Agregar o Editar Premios Kids -->
+            <div class="tarea-card" style="margin-bottom: 22px; border-top: 4px solid var(--kids-yellow);">
+                <h3 id="titulo-form-premio-kids">➕ Agregar Premio al Catálogo Kids</h3>
+                <input type="hidden" id="premio-kids-edit-id" value="">
+
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="premio-kids-icono" value="🧸" placeholder="Emoji" style="width: 65px; text-align: center; font-size: 1.2rem; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                        <input type="text" id="premio-kids-nombre" placeholder="Nombre del regalo (Ej: Chupeta)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                    </div>
+                    <input type="text" id="premio-kids-desc" placeholder="Descripción breve (opcional)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                    <input type="number" id="premio-kids-costo" placeholder="Puntos necesarios (Ej: 50)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btn-guardar-premio-kids" class="btn btn-primary" style="flex: 1; background: var(--kids-yellow); color: #111; font-weight: bold;" onclick="guardarPremioKids()">Guardar Premio</button>
+                        <button id="btn-cancelar-premio-kids" class="btn btn-secondary" style="display: none;" onclick="cancelarEdicionPremioKids()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Catálogo Activo (Para Editar / Eliminar) -->
+            <h3 style="margin-bottom: 12px;">🛍️ Premios Disponibles (Editar / Eliminar)</h3>
+            <div id="lista-premios-kids-admin" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+                <p style="text-align: center; color: var(--text-secondary);">Cargando catálogo...</p>
+            </div>
+
+            <!-- Historial de Canjes Realizados -->
+            <h3 style="margin-bottom: 12px;">🧾 Historial de Premios Entregados</h3>
+            <div id="lista-canjes-kids-admin" style="display: flex; flex-direction: column; gap: 8px;">
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem;">Aún no se han entregado premios.</p>
+            </div>
         </div>
 
         <footer class="app-footer" style="margin-top: 30px;">
@@ -91,12 +162,26 @@
 
     <script src="app.js"></script>
     <script>
+        let listaNinosGlobal = [];
+        let listaPremiosKidsGlobal = [];
+
         document.addEventListener('DOMContentLoaded', () => {
             cargarNinosKids();
         });
 
+        function cambiarTabKids(seccion) {
+            document.querySelectorAll('.kids-seccion').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById('sec-kids-' + seccion).style.display = 'block';
+            document.getElementById('tab-kids-' + seccion).classList.add('active');
+
+            if (seccion === 'ninos') cargarNinosKids();
+            if (seccion === 'tienda') cargarDatosTiendaKids();
+        }
+
         // ==========================================
-        // REGISTRAR NIÑO MANUALMENTE
+        // GESTIÓN DE NIÑOS, PUNTOS Y RACHAS
         // ==========================================
         async function registrarNinoManual() {
             const nombre = document.getElementById('kids-nombre').value.trim();
@@ -106,172 +191,288 @@
                 alert("⚠️ Por favor ingresa el nombre del niño o niña.");
                 return;
             }
+            if (!db) return;
 
-            if (!db) {
-                alert("❌ Error de conexión con Supabase.");
-                return;
-            }
+            const { error } = await db.from('ninos_kids').insert([{
+                nombre: nombre,
+                representante: representante || 'No especificado',
+                puntos: 0,
+                racha_actual: 0,
+                retos_completados: 0
+            }]);
 
-            try {
-                const { error } = await db.from('ninos_kids').insert([{
-                    nombre: nombre,
-                    representante: representante || 'No especificado',
-                    puntos: 0,
-                    racha_actual: 0,
-                    retos_completados: 0
-                }]);
-
-                if (error) {
-                    alert("❌ Error al registrar: " + error.message);
-                } else {
-                    alert(`✅ ¡${nombre} fue registrado con éxito en Célula Kids!`);
-                    document.getElementById('kids-nombre').value = '';
-                    document.getElementById('kids-representante').value = '';
-                    cargarNinosKids();
-                }
-            } catch (err) {
-                console.error("Excepción:", err);
-                alert("❌ Ocurrió un error inesperado al guardar.");
+            if (error) {
+                alert("❌ Error al registrar: " + error.message);
+            } else {
+                alert(`✅ ¡${nombre} fue registrado con éxito en Célula Kids!`);
+                document.getElementById('kids-nombre').value = '';
+                document.getElementById('kids-representante').value = '';
+                cargarNinosKids();
             }
         }
 
-        // ==========================================
-        // CARGAR LISTA DE NIÑOS DESDE SUPABASE
-        // ==========================================
         async function cargarNinosKids() {
             const contenedor = document.getElementById('lista-ninos-container');
-            if (!contenedor) return;
+            if (!contenedor || !db) return;
 
-            if (!db) {
-                contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error: No se conectó con Supabase.</p>";
+            const { data, error } = await db
+                .from('ninos_kids')
+                .select('*')
+                .order('puntos', { ascending: false });
+
+            if (error) {
+                contenedor.innerHTML = `<p style='text-align: center; color: #ff6b6b;'>❌ Error: ${error.message}</p>`;
                 return;
             }
 
-            try {
-                const { data, error } = await db
-                    .from('ninos_kids')
-                    .select('*')
-                    .order('id', { ascending: false });
+            listaNinosGlobal = data || [];
 
-                if (error) {
-                    contenedor.innerHTML = `<p style='text-align: center; color: var(--text-secondary);'>ℹ️ Error al consultar: ${error.message}</p>`;
-                    return;
-                }
-
-                if (!data || data.length === 0) {
-                    contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay niños registrados todavía. ¡Agrega el primero arriba!</p>";
-                    return;
-                }
-
-                contenedor.innerHTML = "";
-                data.forEach((nino) => {
-                    const card = document.createElement('div');
-                    card.className = "kid-card";
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                            <h4 style="margin: 0; font-size: 1.1rem; color: #fff;">🎈 ${nino.nombre}</h4>
-                            <div class="badges-row">
-                                <span class="badge-kids-racha">🔥 ${nino.racha_actual || 0} sem</span>
-                                <span class="badge-kids-pts">⭐ ${nino.puntos || 0} pts</span>
-                            </div>
-                        </div>
-                        <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-secondary);">👤 Representante: ${nino.representante || 'N/A'}</p>
-                        
-                        <!-- Controles de Asistencia / Racha -->
-                        <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
-                            <button class="btn-kids-action" style="background: #00a8e8; color: white; flex: 1;" onclick="modificarRachaKids(${nino.id}, ${nino.racha_actual || 0}, 1)">🔥 +1 Racha (Asistió)</button>
-                            <button class="btn-kids-action" style="background: #7f8c8d; color: white;" onclick="reiniciarRachaKids(${nino.id}, '${nino.nombre}')">🔄 0 Racha</button>
-                        </div>
-
-                        <!-- Controles de Puntos / Retos -->
-                        <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                            <button class="btn-kids-action" style="background: #27ae60; color: white; flex: 1;" onclick="modificarPuntosKids(${nino.id}, ${nino.puntos || 0}, 10)">+10 Pts ⭐</button>
-                            <button class="btn-kids-action" style="background: #e67e22; color: white; flex: 1;" onclick="modificarPuntosKids(${nino.id}, ${nino.puntos || 0}, -10)">-10 Pts</button>
-                            <button class="btn-kids-action" style="background: #c0392b; color: white;" onclick="eliminarNinoKids(${nino.id}, '${nino.nombre}')">🗑️</button>
-                        </div>
-                    `;
-                    contenedor.appendChild(card);
-                });
-
-            } catch (err) {
-                console.error("Error al cargar niños:", err);
-                contenedor.innerHTML = "<p style='text-align: center; color: #ff6b6b;'>❌ Error de red al cargar los datos.</p>";
+            if (listaNinosGlobal.length === 0) {
+                contenedor.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay niños registrados todavía. ¡Agrega el primero arriba!</p>";
+                return;
             }
+
+            contenedor.innerHTML = "";
+            listaNinosGlobal.forEach((nino) => {
+                const card = document.createElement('div');
+                card.className = "kid-card";
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                        <h4 style="margin: 0; font-size: 1.1rem; color: #fff;">🎈 ${nino.nombre}</h4>
+                        <div class="badges-row">
+                            <span class="badge-kids-racha">🔥 ${nino.racha_actual || 0} sem</span>
+                            <span class="badge-kids-pts">⭐ ${nino.puntos || 0} pts</span>
+                        </div>
+                    </div>
+                    <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-secondary);">👤 Representante: ${nino.representante || 'N/A'}</p>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                        <button class="btn-kids-action" style="background: #00a8e8; color: white; flex: 1;" onclick="modificarRachaKids(${nino.id}, ${nino.racha_actual || 0}, 1)">🔥 +1 Racha (Asistió)</button>
+                        <button class="btn-kids-action" style="background: #7f8c8d; color: white;" onclick="reiniciarRachaKids(${nino.id}, '${nino.nombre.replace(/'/g, "\\'")}')">🔄 0 Racha</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                        <button class="btn-kids-action" style="background: #27ae60; color: white; flex: 1;" onclick="modificarPuntosKids(${nino.id}, ${nino.puntos || 0}, 10)">+10 Pts ⭐</button>
+                        <button class="btn-kids-action" style="background: #e67e22; color: white; flex: 1;" onclick="modificarPuntosKids(${nino.id}, ${nino.puntos || 0}, -10)">-10 Pts</button>
+                        <button class="btn-kids-action" style="background: #c0392b; color: white;" onclick="eliminarNinoKids(${nino.id}, '${nino.nombre.replace(/'/g, "\\'")}')">🗑️</button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
         }
 
-        // ==========================================
-        // SUMAR RACHA (ASISTENCIA MANUAL)
-        // ==========================================
         async function modificarRachaKids(idNino, rachaActual, cantidad) {
-            let nuevaRacha = rachaActual + cantidad;
-            if (nuevaRacha < 0) nuevaRacha = 0;
-
-            const { error } = await db
-                .from('ninos_kids')
-                .update({ racha_actual: nuevaRacha })
-                .eq('id', idNino);
-
-            if (error) {
-                alert("❌ Error al actualizar racha: " + error.message);
-            } else {
-                cargarNinosKids();
-            }
+            let nuevaRacha = Math.max(0, rachaActual + cantidad);
+            const { error } = await db.from('ninos_kids').update({ racha_actual: nuevaRacha }).eq('id', idNino);
+            if (!error) cargarNinosKids();
         }
 
-        // ==========================================
-        // REINICIAR RACHA A CERO (Si faltó a la célula)
-        // ==========================================
         async function reiniciarRachaKids(idNino, nombreNino) {
             if (!confirm(`¿Reiniciar la racha de "${nombreNino}" a 0 semanas?`)) return;
-
-            const { error } = await db
-                .from('ninos_kids')
-                .update({ racha_actual: 0 })
-                .eq('id', idNino);
-
-            if (error) {
-                alert("❌ Error al reiniciar racha: " + error.message);
-            } else {
-                cargarNinosKids();
-            }
+            const { error } = await db.from('ninos_kids').update({ racha_actual: 0 }).eq('id', idNino);
+            if (!error) cargarNinosKids();
         }
 
-        // ==========================================
-        // SUMAR / RESTAR PUNTOS A UN NIÑO
-        // ==========================================
         async function modificarPuntosKids(idNino, puntosActuales, cantidad) {
-            let nuevosPuntos = puntosActuales + cantidad;
-            if (nuevosPuntos < 0) nuevosPuntos = 0;
-
-            const { error } = await db
-                .from('ninos_kids')
-                .update({ puntos: nuevosPuntos })
-                .eq('id', idNino);
-
-            if (error) {
-                alert("❌ Error al actualizar puntos: " + error.message);
-            } else {
-                cargarNinosKids();
-            }
+            let nuevosPuntos = Math.max(0, puntosActuales + cantidad);
+            const { error } = await db.from('ninos_kids').update({ puntos: nuevosPuntos }).eq('id', idNino);
+            if (!error) cargarNinosKids();
         }
 
-        // ==========================================
-        // ELIMINAR REGISTRO DE UN NIÑO
-        // ==========================================
         async function eliminarNinoKids(idNino, nombreNino) {
             if (!confirm(`⚠️ ¿Deseas eliminar a "${nombreNino}" del registro de Célula Kids?`)) return;
+            const { error } = await db.from('ninos_kids').delete().eq('id', idNino);
+            if (!error) cargarNinosKids();
+        }
 
-            const { error } = await db
-                .from('ninos_kids')
-                .delete()
-                .eq('id', idNino);
+        // ==========================================
+        // TIENDA KIDS (ADMIN CANJEA Y VACÍA PUNTOS)
+        // ==========================================
+        async function cargarDatosTiendaKids() {
+            if (!db) return;
 
-            if (error) {
-                alert("❌ Error al eliminar: " + error.message);
+            // 1. Traer niños actualizados para el selector
+            const { data: ninos } = await db.from('ninos_kids').select('*').order('nombre', { ascending: true });
+            listaNinosGlobal = ninos || [];
+
+            const selectNino = document.getElementById('select-nino-canje');
+            selectNino.innerHTML = `<option value="">-- Elige un niño/a --</option>`;
+            listaNinosGlobal.forEach(n => {
+                selectNino.innerHTML += `<option value="${n.id}">${n.nombre} (⭐ ${n.puntos || 0} pts)</option>`;
+            });
+
+            // 2. Traer premios para el selector y la lista editable
+            const { data: premios } = await db.from('premios_kids').select('*').order('costo_puntos', { ascending: true });
+            listaPremiosKidsGlobal = premios || [];
+
+            const selectPremio = document.getElementById('select-premio-kids');
+            const contPremios = document.getElementById('lista-premios-kids-admin');
+
+            selectPremio.innerHTML = `<option value="">-- Elige un premio --</option>`;
+            contPremios.innerHTML = "";
+
+            if (listaPremiosKidsGlobal.length === 0) {
+                contPremios.innerHTML = "<p style='text-align: center; color: var(--text-secondary);'>No hay premios creados aún.</p>";
             } else {
-                alert("🗑️ Niño eliminado correctamente.");
-                cargarNinosKids();
+                listaPremiosKidsGlobal.forEach(p => {
+                    selectPremio.innerHTML += `<option value="${p.id}">${p.icono || '🧸'} ${p.nombre} (Requiere ${p.costo_puntos} pts)</option>`;
+
+                    const card = document.createElement('div');
+                    card.className = "tarea-card";
+                    card.innerHTML = `
+                        <div class="tarea-header">
+                            <h4 style="margin: 0;">${p.icono || '🧸'} ${p.nombre}</h4>
+                            <span class="badge memorizar" style="background: rgba(248, 201, 7, 0.2); color: #f8c907;">${p.costo_puntos} pts</span>
+                        </div>
+                        <p style="margin: 6px 0; font-size: 0.85rem; color: var(--text-secondary);">${p.descripcion || ''}</p>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button class="btn btn-secondary" style="padding: 6px; font-size: 0.8rem; flex: 1;" 
+                                onclick="prepararEdicionPremioKids(${p.id}, '${p.nombre.replace(/'/g, "\\'")}', '${(p.descripcion || '').replace(/'/g, "\\'")}', ${p.costo_puntos}, '${p.icono || '🧸'}')">
+                                ✏️ Editar
+                            </button>
+                            <button class="btn btn-secondary" style="padding: 6px; font-size: 0.8rem; background: #c0392b; color: white;" 
+                                onclick="eliminarPremioKids(${p.id}, '${p.nombre.replace(/'/g, "\\'")}')">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    `;
+                    contPremios.appendChild(card);
+                });
             }
+
+            // 3. Cargar historial de canjes kids
+            const contCanjes = document.getElementById('lista-canjes-kids-admin');
+            const { data: canjes } = await db.from('canjes_kids').select('*').order('id', { ascending: false });
+
+            if (!canjes || canjes.length === 0) {
+                contCanjes.innerHTML = "<p style='text-align: center; color: var(--text-secondary); font-size: 0.85rem;'>Aún no se han entregado premios.</p>";
+                return;
+            }
+
+            contCanjes.innerHTML = "";
+            canjes.forEach(c => {
+                const fechaFormat = new Date(c.fecha).toLocaleDateString('es-VE');
+                contCanjes.innerHTML += `
+                    <div class="tarea-card" style="padding: 10px 14px; border-left: 4px solid var(--kids-green);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 0.9rem;">🎈 ${c.nino_nombre}</strong>
+                                <div style="font-size: 0.82rem; color: #f8c907;">🎁 ${c.premio_nombre} (Vaciados: ${c.puntos_vaciados} pts)</div>
+                            </div>
+                            <small style="color: var(--text-secondary); font-size: 0.75rem;">📅 ${fechaFormat}</small>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function procesarCanjeKids() {
+            const premioId = parseInt(document.getElementById('select-premio-kids').value);
+            const ninoId = parseInt(document.getElementById('select-nino-canje').value);
+
+            if (!premioId || !ninoId) {
+                alert("⚠️ Por favor selecciona tanto el premio como el niño.");
+                return;
+            }
+
+            const premio = listaPremiosKidsGlobal.find(p => p.id === premioId);
+            const nino = listaNinosGlobal.find(n => n.id === ninoId);
+
+            if (!premio || !nino) return;
+
+            const puntosActuales = nino.puntos || 0;
+            if (puntosActuales < premio.costo_puntos) {
+                alert(`❌ A ${nino.nombre} no le alcanzan los puntos.\nTiene: ${puntosActuales} pts | Requiere: ${premio.costo_puntos} pts.`);
+                return;
+            }
+
+            const confirmar = confirm(`🎁 ¿Entregar "${premio.nombre}" a ${nino.nombre}?\n\nAl confirmar, sus ${puntosActuales} puntos se vaciarán a 0.`);
+            if (!confirmar) return;
+
+            // 1. Vaciar los puntos del niño a 0 en Supabase
+            const { error: errUpdate } = await db
+                .from('ninos_kids')
+                .update({ puntos: 0 })
+                .eq('id', nino.id);
+
+            if (errUpdate) {
+                alert("❌ Error al vaciar puntos: " + errUpdate.message);
+                return;
+            }
+
+            // 2. Guardar registro en el historial de canjes kids
+            await db.from('canjes_kids').insert([{
+                nino_id: nino.id,
+                nino_nombre: nino.nombre,
+                premio_nombre: premio.nombre,
+                puntos_vaciados: puntosActuales
+            }]);
+
+            alert(`🎉 ¡Premio canjeado con éxito! Se entregará "${premio.nombre}" a ${nino.nombre} y su saldo volvió a 0 puntos.`);
+            cargarDatosTiendaKids();
+        }
+
+        async function guardarPremioKids() {
+            if (!db) return;
+            const idEdit = document.getElementById('premio-kids-edit-id').value;
+            const icono = document.getElementById('premio-kids-icono').value.trim() || '🧸';
+            const nombre = document.getElementById('premio-kids-nombre').value.trim();
+            const descripcion = document.getElementById('premio-kids-desc').value.trim();
+            const costo = parseInt(document.getElementById('premio-kids-costo').value);
+
+            if (!nombre || isNaN(costo) || costo <= 0) {
+                alert("⚠️ Ingresa un nombre válido y los puntos requeridos.");
+                return;
+            }
+
+            if (idEdit) {
+                const { error } = await db
+                    .from('premios_kids')
+                    .update({ icono, nombre, descripcion, costo_puntos: costo })
+                    .eq('id', idEdit);
+                if (error) return alert("❌ Error al editar: " + error.message);
+                alert("✅ Premio actualizado.");
+            } else {
+                const { error } = await db
+                    .from('premios_kids')
+                    .insert([{ icono, nombre, descripcion, costo_puntos: costo }]);
+                if (error) return alert("❌ Error al crear: " + error.message);
+                alert("✅ Premio agregado al catálogo Kids.");
+            }
+
+            cancelarEdicionPremioKids();
+            cargarDatosTiendaKids();
+        }
+
+        function prepararEdicionPremioKids(id, nombre, desc, costo, icono) {
+            document.getElementById('premio-kids-edit-id').value = id;
+            document.getElementById('premio-kids-icono').value = icono;
+            document.getElementById('premio-kids-nombre').value = nombre;
+            document.getElementById('premio-kids-desc').value = desc;
+            document.getElementById('premio-kids-costo').value = costo;
+
+            document.getElementById('titulo-form-premio-kids').innerText = "✏️ Editando Premio Kids";
+            document.getElementById('btn-guardar-premio-kids').innerText = "💾 Guardar Cambios";
+            document.getElementById('btn-cancelar-premio-kids').style.display = "inline-block";
+            document.getElementById('sec-kids-tienda').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelarEdicionPremioKids() {
+            document.getElementById('premio-kids-edit-id').value = "";
+            document.getElementById('premio-kids-icono').value = "🧸";
+            document.getElementById('premio-kids-nombre').value = "";
+            document.getElementById('premio-kids-desc').value = "";
+            document.getElementById('premio-kids-costo').value = "";
+
+            document.getElementById('titulo-form-premio-kids').innerText = "➕ Agregar Premio al Catálogo Kids";
+            document.getElementById('btn-guardar-premio-kids').innerText = "Guardar Premio";
+            document.getElementById('btn-cancelar-premio-kids').style.display = "none";
+        }
+
+        async function eliminarPremioKids(id, nombre) {
+            if (!confirm(`⚠️ ¿Eliminar "${nombre}" del catálogo Kids?`)) return;
+            const { error } = await db.from('premios_kids').delete().eq('id', id);
+            if (!error) cargarDatosTiendaKids();
         }
     </script>
 </body>
