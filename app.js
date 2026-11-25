@@ -210,36 +210,15 @@ async function eliminarUsuarioNube(idUsuario, nombreUsuario) {
 // ==========================================
 async function obtenerTareasGlobales() {
     if (!db) return [];
-    const { data, error } = await db.from('tareas').select('*');
-    if (error || !data || data.length === 0) {
-        return [
-            {
-                id: 1,
-                titulo: "Lectura del Libro de Juan",
-                descripcion: "Lee el capítulo 15 y responde la pregunta:",
-                tipo: "seleccion",
-                opciones: ["Versículo 5", "Versículo 10", "Versículo 16"],
-                respuesta_correcta: "Versículo 5",
-                puntos: 20
-            }
-        ];
-    }
+    const { data, error } = await db.from('tareas').select('*').order('id', { ascending: false });
+    if (error || !data) return [];
     return data;
 }
 
 async function obtenerAnunciosGlobales() {
     if (!db) return [];
-    const { data, error } = await db.from('anuncios').select('*');
-    if (error || !data || data.length === 0) {
-        return [
-            {
-                id: 1,
-                titulo: "🔥 ¡Megacélula este Domingo!",
-                contenido: "Prepárense todos, tendremos un tiempo especial de convivencia.",
-                fecha: "2026-11-15"
-            }
-        ];
-    }
+    const { data, error } = await db.from('anuncios').select('*').order('id', { ascending: false });
+    if (error || !data) return [];
     return data;
 }
 
