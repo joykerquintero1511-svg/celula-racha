@@ -44,7 +44,7 @@
     </div> <!-- Cierre del container principal -->
 
     <script src="app.js"></script>
-   <script>
+    <script>
         let idsTareasCompletadasNube = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -57,7 +57,6 @@
             let usuario = obtenerUsuarioActual();
             if (!usuario || !db) return;
 
-            // Consultamos en Supabase qué tareas ya hizo este usuario
             const { data, error } = await db
                 .from('tareas_completadas')
                 .select('tarea_id')
@@ -114,11 +113,14 @@
                 let yaEstaHecha = idsTareasCompletadasNube.includes(t.id);
                 let card = document.createElement('div');
                 card.className = "tarea-card";
-                
-                let tipoStr = (t.tipo || 'lectura').toUpperCase();
+
+                let etiquetaTipo = t.tipo === 'vf'
+                    ? 'VERDADERO / FALSO'
+                    : (t.tipo === 'traer' ? 'TRAER A CÉLULA' : 'SELECCIÓN');
+
                 let htmlContenido = `
                     <div class="tarea-header">
-                        <span class="badge lectura">${tipoStr}</span>
+                        <span class="badge lectura">${etiquetaTipo}</span>
                         <span class="puntos-recompensa">+${t.puntos || 20} pts</span>
                     </div>
                     <h3>${t.titulo}</h3>
@@ -127,24 +129,23 @@
 
                 if (yaEstaHecha) {
                     htmlContenido += `<button class="btn btn-completado" disabled>✅ Tarea Completada</button>`;
+                } else if (t.tipo === 'traer') {
+                    htmlContenido += `
+                        <div style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.04); font-size: 0.85rem; color: var(--text-secondary);">
+                            🎒 El líder verificará presencialmente si lo traes a la célula para asignarte los puntos.
+                        </div>
+                    `;
                 } else {
-                    if (t.tipo === 'seleccion' || t.tipo === 'si_no') {
-                        htmlContenido += `<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">`;
-                        if (t.opciones && Array.isArray(t.opciones)) {
-                            t.opciones.forEach(op => {
-                                htmlContenido += `<label style="font-size: 0.9rem; color: var(--text-primary); cursor: pointer;"><input type="radio" name="pregunta_${t.id}" value="${op}"> ${op}</label>`;
-                            });
-                        }
-                        htmlContenido += `</div>`;
-                        htmlContenido += `<button class="btn btn-primary" onclick="verificarRespuesta(${t.id}, '${t.tipo}')">Enviar Respuesta</button>`;
-                    } else {
-                        htmlContenido += `
-                            <div class="input-group" style="margin-bottom: 12px;">
-                                <input type="text" id="resp_${t.id}" placeholder="Escribe tu respuesta aquí...">
-                            </div>
-                            <button class="btn btn-primary" onclick="verificarRespuesta(${t.id}, '${t.tipo}')">Enviar Respuesta</button>
-                        `;
-                    }
+                    const opcionesLista = (t.tipo === 'vf')
+                        ? ["Verdadero", "Falso"]
+                        : (Array.isArray(t.opciones) ? t.opciones : []);
+
+                    htmlContenido += `<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">`;
+                    opcionesLista.forEach(op => {
+                        htmlContenido += `<label style="font-size: 0.9rem; color: var(--text-primary); cursor: pointer;"><input type="radio" name="pregunta_${t.id}" value="${op}"> ${op}</label>`;
+                    });
+                    htmlContenido += `</div>`;
+                    htmlContenido += `<button class="btn btn-primary" onclick="verificarRespuesta(${t.id}, '${t.tipo}')">Enviar Respuesta</button>`;
                 }
 
                 card.innerHTML = htmlContenido;
@@ -157,80 +158,71 @@
             let tarea = tareas.find(t => t.id === idTarea);
             let usuario = obtenerUsuarioActual();
 
-            if (!tarea || !usuario) return;
+            if (!tarea || !usuario || !db || tipo === 'traer') return;
 
-            let respuestaValida = false;
-            let respuestaCorrectaBD = tarea.respuesta_correcta || tarea.respuestaCorrecta;
-
-            if (tipo === 'seleccion' || tipo === 'si_no') {
-                let seleccionada = document.querySelector(`input[name="pregunta_${idTarea}"]:checked`);
-                if (!seleccionada) {
-                    alert("Por favor selecciona una opción.");
-                    return;
-                }
-                if (!respuestaCorrectaBD || seleccionada.value.trim().toLowerCase() === respuestaCorrectaBD.trim().toLowerCase()) {
-                    respuestaValida = true;
-                } else {
-                    alert("❌ Respuesta incorrecta. ¡Inténtalo de nuevo!");
-                    return;
-                }
-            } else {
-                let texto = document.getElementById(`resp_${idTarea}`).value.trim();
-                if (!texto) {
-                    alert("Escribe una respuesta antes de enviar.");
-                    return;
-                }
-                respuestaValida = true;
-            }
-
-            if (respuestaValida) {
-                const puntosGanados = Number(tarea.puntos) || 20;
-
-                if (db) {
-                    // 1. Traemos los puntos reales desde Supabase para no pisar valores anteriores
-                    const { data: userBD, error: errFetch } = await db
-                        .from('usuarios')
-                        .select('puntos')
-                        .eq('id', usuario.id)
-                        .single();
-
-                    if (errFetch) {
-                        alert("❌ Error al conectar con la base de datos: " + errFetch.message);
-                        return;
-                    }
-
-                    const nuevosPuntosTotales = (userBD.puntos || 0) + puntosGanados;
-
-                    // 2. Actualizamos SOLO la columna 'puntos' en la tabla 'usuarios'
-                    const { error: errUpdate } = await db
-                        .from('usuarios')
-                        .update({ puntos: nuevosPuntosTotales })
-                        .eq('id', usuario.id);
-
-                    if (errUpdate) {
-                        alert("❌ Error al guardar puntos en la nube: " + errUpdate.message);
-                        return;
-                    }
-
-                    // 3. Guardamos el registro en la tabla 'tareas_completadas'
-                    await db.from('tareas_completadas').insert([{
-                        usuario_id: usuario.id,
-                        tarea_id: tarea.id
-                    }]);
-
-                    usuario.puntos = nuevosPuntosTotales;
-                } else {
-                    usuario.puntos = (usuario.puntos || 0) + puntosGanados;
-                }
-
-                // Actualizamos sesión local
-                idsTareasCompletadasNube.push(tarea.id);
-                usuario.tareasCompletadas = idsTareasCompletadasNube;
-                localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
-
-                alert(`🎉 ¡Excelente! Respuesta correcta. Ganaste +${puntosGanados} puntos ⭐.`);
+            if (idsTareasCompletadasNube.includes(tarea.id)) {
+                alert("⚠️ Ya completaste esta tarea anteriormente.");
                 await renderizarTareas();
+                return;
             }
+
+            let respuestaCorrectaBD = tarea.respuesta_correcta || tarea.respuestaCorrecta;
+            let seleccionada = document.querySelector(`input[name="pregunta_${idTarea}"]:checked`);
+
+            if (!seleccionada) {
+                alert("Por favor selecciona una opción.");
+                return;
+            }
+
+            if (respuestaCorrectaBD && seleccionada.value.trim().toLowerCase() !== respuestaCorrectaBD.trim().toLowerCase()) {
+                alert("❌ Respuesta incorrecta. ¡Inténtalo de nuevo!");
+                return;
+            }
+
+            // Primero registramos en tareas_completadas para impedir repeticiones
+            const { error: errInsert } = await db.from('tareas_completadas').insert([{
+                usuario_id: usuario.id,
+                tarea_id: tarea.id
+            }]);
+
+            if (errInsert) {
+                alert("⚠️ No se pudo registrar la tarea (o ya fue completada): " + errInsert.message);
+                await cargarTareasCompletadasUsuario();
+                await renderizarTareas();
+                return;
+            }
+
+            const puntosGanados = Number(tarea.puntos) || 20;
+            const { data: userBD, error: errFetch } = await db
+                .from('usuarios')
+                .select('puntos')
+                .eq('id', usuario.id)
+                .single();
+
+            if (errFetch) {
+                alert("❌ Error al conectar con la base de datos: " + errFetch.message);
+                return;
+            }
+
+            const nuevosPuntosTotales = (userBD.puntos || 0) + puntosGanados;
+
+            const { error: errUpdate } = await db
+                .from('usuarios')
+                .update({ puntos: nuevosPuntosTotales })
+                .eq('id', usuario.id);
+
+            if (errUpdate) {
+                alert("❌ Error al guardar puntos en la nube: " + errUpdate.message);
+                return;
+            }
+
+            usuario.puntos = nuevosPuntosTotales;
+            idsTareasCompletadasNube.push(tarea.id);
+            usuario.tareasCompletadas = idsTareasCompletadasNube;
+            localStorage.setItem('celula_sesion_activa', JSON.stringify(usuario));
+
+            alert(`🎉 ¡Excelente! Respuesta correcta. Ganaste +${puntosGanados} puntos ⭐.`);
+            await renderizarTareas();
         }
     </script>
 </body>

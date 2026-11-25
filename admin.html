@@ -68,17 +68,26 @@
                     <textarea id="tarea-desc" rows="2" placeholder="Descripción o pregunta de la tarea..." style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white; font-family: inherit;"></textarea>
                     
                     <select id="tarea-tipo" onchange="toggleOpcionesTarea()" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
-                        <option value="seleccion">Quiz / Selección Múltiple</option>
-                        <option value="lectura">Lectura / Memorización (Confirmación directa)</option>
-                    </select>
+    <option value="seleccion">Quiz / Selección Múltiple</option>
+    <option value="vf">Verdadero o Falso</option>
+    <option value="traer">Traer algo a la Célula (Validación del Líder)</option>
+</select>
 
-                    <div id="bloque-opciones" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-                        <small style="color: var(--text-secondary);">Opciones de respuesta (escribe las 3 opciones e indica cuál es la correcta):</small>
-                        <input type="text" id="op-1" placeholder="Opción 1" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
-                        <input type="text" id="op-2" placeholder="Opción 2" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
-                        <input type="text" id="op-3" placeholder="Opción 3" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
-                        <input type="text" id="op-correcta" placeholder="Respuesta correcta exacta (Ej: Opción 1)" style="padding: 8px; border-radius: 6px; border: 1px solid #2ecc71; background: var(--bg-color); color: white;">
-                    </div>
+<div id="bloque-opciones" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+    <small style="color: var(--text-secondary);">Opciones de respuesta (escribe las 3 opciones e indica cuál es la correcta):</small>
+    <input type="text" id="op-1" placeholder="Opción 1" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+    <input type="text" id="op-2" placeholder="Opción 2" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+    <input type="text" id="op-3" placeholder="Opción 3" style="padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+    <input type="text" id="op-correcta" placeholder="Respuesta correcta exacta (Ej: Opción 1)" style="padding: 8px; border-radius: 6px; border: 1px solid #2ecc71; background: var(--bg-color); color: white;">
+</div>
+
+<div id="bloque-vf" style="display: none; flex-direction: column; gap: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+    <small style="color: var(--text-secondary);">¿Cuál es la respuesta correcta?</small>
+    <select id="vf-correcta" style="padding: 8px; border-radius: 6px; border: 1px solid #2ecc71; background: var(--bg-color); color: white;">
+        <option value="Verdadero">Verdadero</option>
+        <option value="Falso">Falso</option>
+    </select>
+</div>
 
                     <input type="number" id="tarea-puntos" value="20" placeholder="Puntos que otorga (Ej: 20)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
 
@@ -200,11 +209,11 @@
             if (seccion === 'premios') cargarGestionPremiosAdmin();
         }
 
-        function toggleOpcionesTarea() {
-            const tipo = document.getElementById('tarea-tipo').value;
-            document.getElementById('bloque-opciones').style.display = (tipo === 'seleccion') ? 'flex' : 'none';
-        }
-
+       function toggleOpcionesTarea() {
+    const tipo = document.getElementById('tarea-tipo').value;
+    document.getElementById('bloque-opciones').style.display = (tipo === 'seleccion') ? 'flex' : 'none';
+    document.getElementById('bloque-vf').style.display = (tipo === 'vf') ? 'flex' : 'none';
+}
         // ==========================================
         // GENERADOR DE QR DEL DÍA (Sincronizado)
         // ==========================================
@@ -223,79 +232,159 @@
         // GESTIÓN DE TAREAS EN SUPABASE
         // ==========================================
         async function crearTareaNube() {
-            const titulo = document.getElementById('tarea-titulo').value.trim();
-            const descripcion = document.getElementById('tarea-desc').value.trim();
-            const tipo = document.getElementById('tarea-tipo').value;
-            const puntos = parseInt(document.getElementById('tarea-puntos').value) || 20;
+    const titulo = document.getElementById('tarea-titulo').value.trim();
+    const descripcion = document.getElementById('tarea-desc').value.trim();
+    const tipo = document.getElementById('tarea-tipo').value;
+    const puntos = parseInt(document.getElementById('tarea-puntos').value) || 20;
 
-            if (!titulo || !descripcion) {
-                alert("⚠️ Completa el título y la descripción de la tarea.");
-                return;
-            }
+    if (!titulo || !descripcion) {
+        alert("⚠️ Completa el título y la descripción de la tarea.");
+        return;
+    }
 
-            let opciones = null;
-            let respuesta_correcta = null;
+    let opciones = null;
+    let respuesta_correcta = null;
 
-            if (tipo === 'seleccion') {
-                const op1 = document.getElementById('op-1').value.trim();
-                const op2 = document.getElementById('op-2').value.trim();
-                const op3 = document.getElementById('op-3').value.trim();
-                respuesta_correcta = document.getElementById('op-correcta').value.trim();
+    if (tipo === 'seleccion') {
+        const op1 = document.getElementById('op-1').value.trim();
+        const op2 = document.getElementById('op-2').value.trim();
+        const op3 = document.getElementById('op-3').value.trim();
+        respuesta_correcta = document.getElementById('op-correcta').value.trim();
 
-                if (!op1 || !op2 || !respuesta_correcta) {
-                    alert("⚠️ Completa al menos 2 opciones y la respuesta correcta.");
-                    return;
-                }
-                opciones = [op1, op2, op3].filter(o => o !== "");
-            }
-
-            const { error } = await db.from('tareas').insert([{
-                titulo,
-                descripcion,
-                tipo,
-                opciones,
-                respuesta_correcta,
-                puntos
-            }]);
-
-            if (error) {
-                alert("❌ Error al crear tarea: " + error.message);
-            } else {
-                alert("✅ ¡Tarea publicada en la nube!");
-                document.getElementById('tarea-titulo').value = "";
-                document.getElementById('tarea-desc').value = "";
-                document.getElementById('op-1').value = "";
-                document.getElementById('op-2').value = "";
-                document.getElementById('op-3').value = "";
-                document.getElementById('op-correcta').value = "";
-                cargarTareasAdmin();
-            }
+        if (!op1 || !op2 || !respuesta_correcta) {
+            alert("⚠️ Completa al menos 2 opciones y la respuesta correcta.");
+            return;
         }
+        opciones = [op1, op2, op3].filter(o => o !== "");
+    } else if (tipo === 'vf') {
+        opciones = ["Verdadero", "Falso"];
+        respuesta_correcta = document.getElementById('vf-correcta').value;
+    }
+
+    const { error } = await db.from('tareas').insert([{
+        titulo,
+        descripcion,
+        tipo,
+        opciones,
+        respuesta_correcta,
+        puntos
+    }]);
+
+    if (error) {
+        alert("❌ Error al crear tarea: " + error.message);
+    } else {
+        alert("✅ ¡Tarea publicada en la nube!");
+        document.getElementById('tarea-titulo').value = "";
+        document.getElementById('tarea-desc').value = "";
+        document.getElementById('op-1').value = "";
+        document.getElementById('op-2').value = "";
+        document.getElementById('op-3').value = "";
+        document.getElementById('op-correcta').value = "";
+        cargarTareasAdmin();
+    }
+}
 
         async function cargarTareasAdmin() {
-            const cont = document.getElementById('lista-tareas-admin');
-            cont.innerHTML = "<p style='color: var(--text-secondary);'>Cargando tareas...</p>";
+    const cont = document.getElementById('lista-tareas-admin');
+    cont.innerHTML = "<p style='color: var(--text-secondary);'>Cargando tareas...</p>";
 
-            const { data, error } = await db.from('tareas').select('*').order('id', { ascending: false });
-            if (error || !data || data.length === 0) {
-                cont.innerHTML = "<p style='color: var(--text-secondary);'>No hay tareas creadas aún.</p>";
-                return;
-            }
+    const { data: tareas, error } = await db.from('tareas').select('*').order('id', { ascending: false });
+    if (error || !tareas || tareas.length === 0) {
+        cont.innerHTML = "<p style='color: var(--text-secondary);'>No hay tareas creadas aún.</p>";
+        return;
+    }
 
-            cont.innerHTML = "";
-            data.forEach(t => {
-                cont.innerHTML += `
-                    <div class="tarea-card">
-                        <div class="tarea-header">
-                            <h4>${t.titulo}</h4>
-                            <span class="badge memorizar">+${t.puntos} pts</span>
-                        </div>
-                        <p style="font-size: 0.9rem; margin: 6px 0;">${t.descripcion}</p>
-                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; background: #c0392b;" onclick="eliminarTareaNube(${t.id})">🗑️ Eliminar</button>
+    const { data: usuarios } = await db.from('usuarios').select('id, nombre, puntos').order('nombre', { ascending: true });
+    const { data: completadas } = await db.from('tareas_completadas').select('usuario_id, tarea_id');
+
+    cont.innerHTML = "";
+    tareas.forEach(t => {
+        let htmlValidacionTraer = "";
+
+        if (t.tipo === 'traer' && usuarios && usuarios.length > 0) {
+            const opcionesJovenes = usuarios.map(u => {
+                const yaLaTiene = (completadas || []).some(c => c.usuario_id === u.id && c.tarea_id === t.id);
+                return `<option value="${u.id}" ${yaLaTiene ? 'disabled' : ''}>${u.nombre} ${yaLaTiene ? '(Ya marcada)' : `(${u.puntos || 0} pts)`}</option>`;
+            }).join("");
+
+            htmlValidacionTraer = `
+                <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid var(--card-border);">
+                    <small style="display: block; margin-bottom: 6px; color: #f8c907; font-weight: bold;">🎒 Marcar si trajo lo pedido a la célula:</small>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <select id="sel-joven-traer-${t.id}" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--bg-color); color: white;">
+                            <option value="">-- Selecciona un joven --</option>
+                            ${opcionesJovenes}
+                        </select>
+                        <button class="btn btn-primary" style="padding: 8px 12px; font-size: 0.82rem; width: auto; background: #27ae60;" onclick="aprobarTareaTraerNube(${t.id}, ${t.puntos || 20})">
+                            ✅ Sí lo trajo (+${t.puntos || 20} pts)
+                        </button>
                     </div>
-                `;
-            });
+                </div>
+            `;
         }
+
+        cont.innerHTML += `
+            <div class="tarea-card">
+                <div class="tarea-header">
+                    <h4>${t.titulo} <small style="color: var(--text-secondary);">[${t.tipo.toUpperCase()}]</small></h4>
+                    <span class="badge memorizar">+${t.puntos} pts</span>
+                </div>
+                <p style="font-size: 0.9rem; margin: 6px 0;">${t.descripcion}</p>
+                ${htmlValidacionTraer}
+                <div style="margin-top: 10px;">
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; background: #c0392b;" onclick="eliminarTareaNube(${t.id})">🗑️ Eliminar</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+async function aprobarTareaTraerNube(idTarea, puntosGanados) {
+    const select = document.getElementById(`sel-joven-traer-${idTarea}`);
+    const idUsuario = parseInt(select.value);
+
+    if (!idUsuario) {
+        alert("⚠️ Selecciona primero al joven que trajo lo pedido.");
+        return;
+    }
+
+    const { error: errInsert } = await db.from('tareas_completadas').insert([{
+        usuario_id: idUsuario,
+        tarea_id: idTarea
+    }]);
+
+    if (errInsert) {
+        alert("⚠️ Este joven ya tiene esta tarea marcada o hubo un error: " + errInsert.message);
+        cargarTareasAdmin();
+        return;
+    }
+
+    const { data: userBD, error: errFetch } = await db
+        .from('usuarios')
+        .select('nombre, puntos')
+        .eq('id', idUsuario)
+        .single();
+
+    if (errFetch || !userBD) {
+        alert("❌ Error al consultar los puntos del joven.");
+        return;
+    }
+
+    const nuevosPuntos = (userBD.puntos || 0) + (Number(puntosGanados) || 20);
+    const { error: errUpdate } = await db
+        .from('usuarios')
+        .update({ puntos: nuevosPuntos })
+        .eq('id', idUsuario);
+
+    if (errUpdate) {
+        alert("❌ Error al asignar puntos: " + errUpdate.message);
+        return;
+    }
+
+    alert(`✅ ¡Listo! Se marcó la tarea a ${userBD.nombre} y se le sumaron +${puntosGanados} puntos.`);
+    cargarTareasAdmin();
+    cargarSolicitudesNube();
+}
 
         async function eliminarTareaNube(id) {
             if (!confirm("¿Seguro que deseas eliminar esta tarea?")) return;
